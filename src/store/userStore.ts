@@ -10,6 +10,7 @@ export interface User {
   email: string;
   phone?: string;
   address?: string;
+  city?: string; // AJOUTER
 }
 
 interface UserState {

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   TextInput,
 } from 'react-native';
 // @ts-expect-error - Expo vector icons types issue
@@ -15,16 +14,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
 import ProductCard from '../../components/product/ProductCard';
+import ProductCardSkeleton from '../../components/product/ProductCardSkeleton';
 import { useProducts } from '../../hooks/useProducts';
 import { Category, Product } from '../../types';
 
-type CategoryProductsRouteProp = RouteProp<
-  { CategoryProducts: { category: Category } },
-  'CategoryProducts'
->;
+type CategoryProductsRouteProp = {
+  CategoryProducts: {
+    category: Category;
+  };
+};
 
 export default function CategoryProductsScreen() {
-  const route = useRoute<CategoryProductsRouteProp>();
+  const route = useRoute<RouteProp<CategoryProductsRouteProp, 'CategoryProducts'>>();
   const navigation = useNavigation();
   const { category } = route.params;
 
@@ -35,7 +36,7 @@ export default function CategoryProductsScreen() {
     data: products = [],
     isLoading,
     refetch,
-  } = useProducts({ categoryId: category.slug   });
+  } = useProducts({ categoryId: category.slug });
 
   // Filtrer et trier les produits
   const filteredProducts = products
@@ -62,8 +63,7 @@ export default function CategoryProductsScreen() {
 
   const handleProductPress = (product: Product) => {
     // @ts-ignore
-navigation.navigate('ProductDetail', { product });
-
+    navigation.navigate('ProductDetail', { product });
   };
 
   return (
@@ -155,9 +155,14 @@ navigation.navigate('ProductDetail', { product });
 
       {/* Products List */}
       {isLoading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        <FlatList
+          data={[1, 2, 3, 4, 5, 6]}
+          keyExtractor={(item) => `skeleton-${item}`}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.list}
+          renderItem={() => <ProductCardSkeleton />}
+        />
       ) : filteredProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="cube-outline" size={80} color={Colors.light} />
@@ -237,11 +242,6 @@ const styles = StyleSheet.create({
   },
   sortButtonTextActive: {
     color: Colors.white,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   emptyContainer: {
     flex: 1,

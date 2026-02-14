@@ -9,7 +9,6 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 // @ts-expect-error - Expo vector icons types issue
@@ -20,6 +19,8 @@ import { Colors } from '../../constants/colors';
 import ProductCard from '../../components/product/ProductCard';
 import CategoryCard from '../../components/product/CategoryCard';
 import StatsCard from '../../components/home/StatsCard';
+import ProductCardSkeleton from '../../components/product/ProductCardSkeleton';
+import CategoryCardSkeleton from '../../components/product/CategoryCardSkeleton';
 import { useProducts, useCategories } from '../../hooks/useProducts';
 import { HomeStackParamList } from '../../navigation/HomeStackNavigator';
 import { Product } from '../../types';
@@ -114,10 +115,17 @@ export default function HomeScreen() {
         </View>
 
         {categoriesLoading ? (
-          <ActivityIndicator
-            size="large"
-            color={Colors.primary}
-            style={styles.loader}
+          <FlatList
+            data={[1, 2, 3, 4]}
+            keyExtractor={(item) => `cat-skeleton-${item}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesList}
+            renderItem={() => (
+              <View style={styles.categoryItem}>
+                <CategoryCardSkeleton />
+              </View>
+            )}
           />
         ) : (
           <FlatList
@@ -145,11 +153,11 @@ export default function HomeScreen() {
         </View>
 
         {productsLoading ? (
-          <ActivityIndicator
-            size="large"
-            color={Colors.primary}
-            style={styles.loader}
-          />
+          <View style={styles.productsGrid}>
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <ProductCardSkeleton key={`prod-skeleton-${item}`} />
+            ))}
+          </View>
         ) : products.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Aucun produit trouvé</Text>
@@ -256,9 +264,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 16,
     justifyContent: 'space-between',
-  },
-  loader: {
-    marginVertical: 32,
   },
   emptyContainer: {
     padding: 32,

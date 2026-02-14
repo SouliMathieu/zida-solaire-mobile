@@ -1,31 +1,30 @@
 {
-    "expo": {
-      "name": "ZIDA SOLAIRE",
-      "slug": "zida-solaire-mobile",
-      "version": "1.0.0",
-      "orientation": "portrait",
-      "icon": "./assets/icon.png",
-      "userInterfaceStyle": "light",
-      "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "contain",
+  "expo": {
+    "name": "ZIDA SOLAIRE",
+    "slug": "zida-solaire-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zidasolaire.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FF6B35"
       },
-      "assetBundlePatterns": [
-        "**/*"
-      ],
-      "ios": {
-        "supportsTablet": true,
-        "bundleIdentifier": "com.zidasolaire.mobile"
-      },
-      "android": {
-        "adaptiveIcon": {
-          "foregroundImage": "./assets/adaptive-icon.png",
-          "backgroundColor": "#FF6B35"
-        },
-        "package": "com.zidasolaire.mobile"
-      },
-      "platforms": ["ios", "android"]
-    }
+      "package": "com.zidasolaire.mobile"
+    },
+    "platforms": ["ios", "android"]
   }
-  
+}

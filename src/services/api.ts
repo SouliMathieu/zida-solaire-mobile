@@ -296,3 +296,104 @@ export const createDevisRequest = async (devisData: {
     throw error;
   }
 };
+
+// ==================== CUSTOMER AUTH ====================
+
+export const customerLogin = async (phone: string) => {
+  try {
+    const response = await api.post('/customer/login', { phone });
+    return response.data;
+  } catch (error) {
+    console.error('Error customer login:', error);
+    throw error;
+  }
+};
+
+export const customerRegister = async (userData: {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone: string;
+  address?: string;
+  city?: string;
+}) => {
+  try {
+    const response = await api.post('/customer/register', userData);
+    return response.data;
+  } catch (error) {
+    console.error('Error customer register:', error);
+    throw error;
+  }
+};
+
+export const getCustomerProfile = async () => {
+  try {
+    const response = await api.get('/customer/profile');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting profile:', error);
+    throw error;
+  }
+};
+
+export const updateCustomerProfile = async (userData: {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+}) => {
+  try {
+    const response = await api.patch('/customer/profile', userData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+};
+
+// Ajouter cette fonction à votre fichier src/services/api.ts existant
+
+// ==================== DEMANDES DE DÉPANNAGE ====================
+
+export const createRepairRequest = async (requestData: {
+  name: string;
+  phone: string;
+  address?: string;
+  installationType?: string;
+  problemDescription: string;
+  urgency: 'low' | 'normal' | 'high';
+  installedByZida: 'yes' | 'no';
+}) => {
+  try {
+    const response = await api.post('/repair-requests', requestData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating repair request:', error);
+    throw error;
+  }
+};
+
+export const fetchRepairRequests = async () => {
+  try {
+    const response = await api.get('/repair-requests');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching repair requests:', error);
+    throw error;
+  }
+};
+
+export const updateRepairRequestStatus = async (
+  requestId: string,
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+) => {
+  try {
+    const response = await api.patch(`/repair-requests/${requestId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating repair request status:', error);
+    throw error;
+  }
+};
