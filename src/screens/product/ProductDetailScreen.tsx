@@ -8,29 +8,27 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
-  ActivityIndicator,
   Share,
   Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
 import Button from '../../components/common/Button';
 import { useCartStore } from '../../store/cartStore';
-import { Product } from '../../types';
+import { HomeStackParamList } from '../../navigation/HomeStackNavigator';
 
 const { width } = Dimensions.get('window');
 
-interface ProductDetailScreenProps {
-  product: Product;
-  onBack?: () => void;
-}
+type ProductDetailRouteProp = RouteProp<HomeStackParamList, 'ProductDetail'>;
 
-export default function ProductDetailScreen({
-  product,
-  onBack,
-}: ProductDetailScreenProps) {
+export default function ProductDetailScreen() {
+  const route = useRoute<ProductDetailRouteProp>();
+  const navigation = useNavigation();
+  const { product } = route.params;
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const { addToCart, getItem } = useCartStore();
@@ -87,16 +85,6 @@ export default function ProductDetailScreen({
 
   return (
     <View style={styles.container}>
-      {/* Header avec bouton retour */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-          <Ionicons name="share-outline" size={24} color={Colors.text} />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Images du produit */}
         <View style={styles.imageContainer}>
@@ -126,7 +114,10 @@ export default function ProductDetailScreen({
           )}
 
           {/* Badge stock */}
-          <View style={styles.stockBadge}>
+          <View style={[
+            styles.stockBadge,
+            { backgroundColor: product.stock > 0 ? Colors.success : Colors.error }
+          ]}>
             <Text style={styles.stockText}>
               {product.stock > 0
                 ? `${product.stock} en stock`
@@ -256,37 +247,10 @@ export default function ProductDetailScreen({
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.light,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  shareButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.light,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   imageContainer: {
     position: 'relative',
@@ -320,7 +284,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     right: 16,
-    backgroundColor: Colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -373,7 +336,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: Colors.secondary,
   },
   cartBadge: {
     flexDirection: 'row',
@@ -438,7 +401,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   bottomSpacing: {
-    height: 100,
+    height: 120,
   },
   footer: {
     backgroundColor: Colors.white,

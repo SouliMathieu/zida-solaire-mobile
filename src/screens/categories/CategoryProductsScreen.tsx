@@ -268,4 +268,7 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
+  bottomSpacing: {
+    height: 140,
+  },
 });

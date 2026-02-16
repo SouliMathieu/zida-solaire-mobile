@@ -7,18 +7,51 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
   Linking,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import Button from '../../components/common/Button';
+import GradientButton from '../../components/common/GradientButton';
+import Toast from '../../components/common/Toast';
+import { useToast } from '../../hooks/useToast';
+import { useSubmitContact } from '../../hooks/useForms';
+
+const CONTACTS = [
+  {
+    name: 'Zida Boubacar',
+    role: 'PDG',
+    phone: '+22674339977',
+    location: 'Siège de Cissin',
+  },
+  {
+    name: 'Kientega Mathieu',
+    role: 'DG',
+    phone: '+22655220303',
+    location: 'Siège de Cissin',
+  },
+  {
+    name: 'Kientega Prosper',
+    role: 'Responsable',
+    phone: '+22667448282',
+    location: 'Siège de Cissin',
+  },
+  {
+    name: 'Zida Abdoulaye',
+    role: 'Responsable',
+    phone: '+22665033700',
+    location: 'Siège de Saaba',
+  },
+];
 
 export default function ContactScreen() {
+  const { toast, showToast, hideToast } = useToast();
+  const submitContact = useSubmitContact();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -35,15 +68,15 @@ export default function ContactScreen() {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      Alert.alert('Erreur', 'Veuillez entrer votre nom');
+      showToast('Veuillez entrer votre nom', 'error');
       return false;
     }
     if (!formData.phone.trim()) {
-      Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
+      showToast('Veuillez entrer votre numéro de téléphone', 'error');
       return false;
     }
     if (!formData.message.trim()) {
-      Alert.alert('Erreur', 'Veuillez entrer votre message');
+      showToast('Veuillez entrer votre message', 'error');
       return false;
     }
     return true;
@@ -55,45 +88,39 @@ export default function ContactScreen() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Connecter à l'API /api/contact
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await submitContact.mutateAsync({
+        name: formData.name,
+        email: formData.email || undefined,
+        phone: formData.phone,
+        subject: formData.subject || undefined,
+        message: formData.message,
+      });
 
-      Alert.alert(
-        'Message envoyé !',
-        'Nous avons bien reçu votre message. Nous vous répondrons dans les plus brefs délais.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Réinitialiser le formulaire
-              setFormData({
-                name: '',
-                email: '',
-                phone: '',
-                subject: '',
-                message: '',
-              });
-            },
-          },
-        ]
+      showToast('Message envoyé avec succès !', 'success');
+      
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
+    } catch (error: any) {
+      showToast(
+        error.response?.data?.message || "Une erreur s'est produite",
+        'error'
       );
-    } catch (error) {
-      Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCall = () => {
-    Linking.openURL('tel:+22625506464');
+  const handleWhatsApp = (phone: string) => {
+    Linking.openURL(`https://wa.me/${phone.replace(/\+/g, '')}`);
   };
 
-  const handleEmail = () => {
-    Linking.openURL('mailto:contact@zidasolaire.bf');
-  };
-
-  const handleWhatsApp = () => {
-    Linking.openURL('https://wa.me/22625506464');
+  const handleCall = (phone: string) => {
+    Linking.openURL(`tel:${phone}`);
   };
 
   return (
@@ -107,47 +134,57 @@ export default function ContactScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="mail" size={60} color={Colors.primary} />
+        <LinearGradient
+          colors={[Colors.teal, Colors.info]}
+          style={styles.header}
+        >
+          <Ionicons name="mail" size={60} color={Colors.white} />
           <Text style={styles.title}>Contactez-nous</Text>
           <Text style={styles.subtitle}>
             Nous sommes là pour répondre à toutes vos questions
           </Text>
-        </View>
+        </LinearGradient>
 
-        {/* Contact rapide */}
-        <View style={styles.quickContactSection}>
-          <Text style={styles.sectionTitle}>Contact rapide</Text>
-
-          <View style={styles.quickContactButtons}>
-            <TouchableOpacity style={styles.quickButton} onPress={handleCall}>
-              <View style={styles.quickButtonIcon}>
-                <Ionicons name="call" size={24} color={Colors.white} />
+        {/* Contacts WhatsApp */}
+        <View style={styles.contactsSection}>
+          <Text style={styles.sectionTitle}>Nos contacts WhatsApp</Text>
+          
+          {CONTACTS.map((contact, index) => (
+            <View key={index} style={styles.contactCard}>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactName}>{contact.name}</Text>
+                <Text style={styles.contactRole}>{contact.role}</Text>
+                <View style={styles.locationRow}>
+                  <Ionicons name="location" size={14} color={Colors.textSecondary} />
+                  <Text style={styles.contactLocation}>{contact.location}</Text>
+                </View>
               </View>
-              <Text style={styles.quickButtonText}>Appeler</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickButton} onPress={handleWhatsApp}>
-              <View style={[styles.quickButtonIcon, { backgroundColor: '#25D366' }]}>
-                <Ionicons name="logo-whatsapp" size={24} color={Colors.white} />
+              
+              <View style={styles.contactActions}>
+                <TouchableOpacity
+                  style={styles.whatsappButton}
+                  onPress={() => handleWhatsApp(contact.phone)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="logo-whatsapp" size={20} color={Colors.white} />
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.callButton}
+                  onPress={() => handleCall(contact.phone)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="call" size={18} color={Colors.white} />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.quickButtonText}>WhatsApp</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickButton} onPress={handleEmail}>
-              <View style={[styles.quickButtonIcon, { backgroundColor: Colors.info }]}>
-                <Ionicons name="mail" size={24} color={Colors.white} />
-              </View>
-              <Text style={styles.quickButtonText}>Email</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          ))}
         </View>
 
         {/* Formulaire */}
         <View style={styles.formSection}>
           <Text style={styles.sectionTitle}>Envoyez-nous un message</Text>
 
-          {/* Nom */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nom complet *</Text>
             <View style={styles.inputContainer}>
@@ -162,7 +199,6 @@ export default function ContactScreen() {
             </View>
           </View>
 
-          {/* Téléphone */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Téléphone *</Text>
             <View style={styles.inputContainer}>
@@ -178,7 +214,6 @@ export default function ContactScreen() {
             </View>
           </View>
 
-          {/* Email */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputContainer}>
@@ -195,7 +230,6 @@ export default function ContactScreen() {
             </View>
           </View>
 
-          {/* Sujet */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Sujet</Text>
             <View style={styles.inputContainer}>
@@ -210,7 +244,6 @@ export default function ContactScreen() {
             </View>
           </View>
 
-          {/* Message */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Message *</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -233,31 +266,23 @@ export default function ContactScreen() {
             </View>
           </View>
 
-          <Button
+          <GradientButton
             title={isSubmitting ? 'Envoi...' : 'Envoyer le message'}
             onPress={handleSubmit}
             loading={isSubmitting}
-            style={styles.submitButton}
+            colors={[Colors.teal, Colors.info]}
           />
         </View>
 
-        {/* Informations */}
+        {/* Informations générales */}
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Nos coordonnées</Text>
+          <Text style={styles.sectionTitle}>Informations générales</Text>
 
           <View style={styles.infoCard}>
             <Ionicons name="location" size={24} color={Colors.primary} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Adresse</Text>
-              <Text style={styles.infoValue}>Ouagadougou, Burkina Faso</Text>
-            </View>
-          </View>
-
-          <View style={styles.infoCard}>
-            <Ionicons name="call" size={24} color={Colors.primary} />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Téléphone</Text>
-              <Text style={styles.infoValue}>+226 25 50 64 64</Text>
+              <Text style={styles.infoLabel}>Sièges</Text>
+              <Text style={styles.infoValue}>Cissin & Saaba, Ouagadougou</Text>
             </View>
           </View>
 
@@ -280,6 +305,13 @@ export default function ContactScreen() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onHide={hideToast}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -293,7 +325,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    backgroundColor: Colors.primary,
     padding: 32,
     alignItems: 'center',
   },
@@ -310,7 +341,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.9,
   },
-  quickContactSection: {
+  contactsSection: {
     padding: 16,
     backgroundColor: Colors.white,
     marginTop: 16,
@@ -321,26 +352,60 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 16,
   },
-  quickContactButtons: {
+  contactCard: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  quickButton: {
+    justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: Colors.background,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#25D366',
   },
-  quickButtonIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.primary,
+  contactInfo: {
+    flex: 1,
+  },
+  contactName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  contactRole: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  contactLocation: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginLeft: 4,
+  },
+  contactActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  whatsappButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#25D366',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  quickButtonText: {
-    fontSize: 12,
-    color: Colors.text,
-    fontWeight: '600',
+  callButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.info,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   formSection: {
     padding: 16,
@@ -383,9 +448,6 @@ const styles = StyleSheet.create({
     minHeight: 120,
     paddingTop: 0,
   },
-  submitButton: {
-    marginTop: 8,
-  },
   infoSection: {
     padding: 16,
     backgroundColor: Colors.white,
@@ -414,6 +476,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   bottomSpacing: {
-    height: 32,
+    height: 140,
   },
 });

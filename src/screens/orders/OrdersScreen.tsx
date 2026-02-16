@@ -10,6 +10,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -19,19 +20,27 @@ import { useOrders } from '../../hooks/useOrders';
 import { OrdersStackParamList } from '../../navigation/OrdersStackNavigator';
 import { Order } from '../../types';
 
-type OrdersScreenNavigationProp = NativeStackNavigationProp<
-  OrdersStackParamList,
-  'OrdersMain'
->;
+type OrdersScreenNavigationProp = NativeStackNavigationProp<OrdersStackParamList>;
 
-const STATUS_COLORS: Record<string, string> = {
-  EN_ATTENTE: Colors.warning,
-  CONFIRMEE: Colors.info,
-  EN_PREPARATION: Colors.info,
-  PRETE: Colors.success,
-  EN_LIVRAISON: Colors.primary,
-  LIVREE: Colors.success,
-  ANNULEE: Colors.error,
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'EN_ATTENTE':
+      return Colors.warning;
+    case 'CONFIRMEE':
+      return Colors.info;
+    case 'EN_PREPARATION':
+      return Colors.purple;
+    case 'PRETE':
+      return Colors.teal;
+    case 'EN_LIVRAISON':
+      return Colors.primary;
+    case 'LIVREE':
+      return Colors.success;
+    case 'ANNULEE':
+      return Colors.error;
+    default:
+      return Colors.gray;
+  }
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -80,7 +89,12 @@ export default function OrdersScreen() {
   if (orders.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="receipt-outline" size={80} color={Colors.light} />
+        <LinearGradient
+          colors={[Colors.primary, Colors.accent]}
+          style={styles.emptyIconContainer}
+        >
+          <Ionicons name="receipt-outline" size={64} color={Colors.white} />
+        </LinearGradient>
         <Text style={styles.emptyTitle}>Aucune commande</Text>
         <Text style={styles.emptyText}>
           Vous n'avez pas encore passé de commande
@@ -110,14 +124,17 @@ export default function OrdersScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.orderHeader}>
-              <Text style={styles.orderId}>Commande #{item.id}</Text>
+              <Text style={styles.orderId}>#{item.id}</Text>
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: STATUS_COLORS[item.status] },
+                  { backgroundColor: `${getStatusColor(item.status)}20` }
                 ]}
               >
-                <Text style={styles.statusText}>
+                <Text style={[
+                  styles.statusText,
+                  { color: getStatusColor(item.status) }
+                ]}>
                   {STATUS_LABELS[item.status]}
                 </Text>
               </View>
@@ -126,7 +143,7 @@ export default function OrdersScreen() {
             <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
 
             <View style={styles.orderInfo}>
-              <Ionicons name="location-outline" size={16} color={Colors.gray} />
+              <Ionicons name="location-outline" size={16} color={Colors.secondary} />
               <Text style={styles.orderAddress} numberOfLines={1}>
                 {item.deliveryAddress}
               </Text>
@@ -161,6 +178,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -175,18 +200,18 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingBottom: 80,
+    paddingBottom: 120,
   },
   orderCard: {
     backgroundColor: Colors.white,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
   },
   orderHeader: {
     flexDirection: 'row',
@@ -195,19 +220,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   orderId: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text,
   },
   statusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: Colors.white,
+    fontWeight: 'bold',
   },
   orderDate: {
     fontSize: 14,
@@ -234,8 +258,8 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.light,
   },
   orderTotal: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: Colors.secondary,
   },
 });

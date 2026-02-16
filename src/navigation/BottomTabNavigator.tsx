@@ -1,11 +1,12 @@
 // src/navigation/BottomTabNavigator.tsx
 
 import React from 'react';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+import CartBadge from '../components/common/CartBadge';
 import { useCartStore } from '../store/cartStore';
 
 import HomeStackNavigator from './HomeStackNavigator';
@@ -16,20 +17,13 @@ import ProfileStackNavigator from './ProfileStackNavigator';
 
 const Tab = createBottomTabNavigator();
 
-// Composant Badge personnalisé
 function CartIconWithBadge({ color, size }: { color: string; size: number }) {
   const totalItems = useCartStore((state) => state.getTotalItems());
 
   return (
     <View style={styles.iconContainer}>
       <Ionicons name="cart" size={size} color={color} />
-      {totalItems > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {totalItems > 99 ? '99+' : totalItems}
-          </Text>
-        </View>
-      )}
+      <CartBadge count={totalItems} />
     </View>
   );
 }
@@ -41,20 +35,24 @@ export default function BottomTabNavigator() {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray,
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 85 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+          height: Platform.OS === 'ios' ? 90 : 75, // Augmenté
+          paddingBottom: Platform.OS === 'ios' ? 30 : 15, // Augmenté
           paddingTop: 10,
-          borderTopWidth: 1,
-          borderTopColor: Colors.light,
-          elevation: 8,
+          backgroundColor: Colors.white,
+          borderTopWidth: 0, // Supprimé la bordure
+          elevation: 12,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
+          marginBottom: Platform.OS === 'ios' ? 0 : 5,
+        },
+        tabBarIconStyle: {
+          marginTop: 5,
         },
         headerStyle: {
           backgroundColor: Colors.primary,
@@ -122,24 +120,5 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    right: -8,
-    top: -4,
-    backgroundColor: Colors.error,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: Colors.white,
-  },
-  badgeText: {
-    color: Colors.white,
-    fontSize: 10,
-    fontWeight: 'bold',
   },
 });

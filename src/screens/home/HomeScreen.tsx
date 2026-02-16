@@ -15,15 +15,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/colors';
 import ProductCard from '../../components/product/ProductCard';
 import CategoryCard from '../../components/product/CategoryCard';
 import StatsCard from '../../components/home/StatsCard';
 import ProductCardSkeleton from '../../components/product/ProductCardSkeleton';
 import CategoryCardSkeleton from '../../components/product/CategoryCardSkeleton';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import EmptyState from '../../components/common/EmptyState';
+import FadeInView from '../../components/common/FadeInView';
 import { useProducts, useCategories } from '../../hooks/useProducts';
 import { HomeStackParamList } from '../../navigation/HomeStackNavigator';
-import { Product } from '../../types';
+import { Product, Category } from '../../types';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>;
 
@@ -31,29 +35,43 @@ export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Récupérer les données depuis l'API
   const {
     data: products = [],
     isLoading: productsLoading,
     refetch: refetchProducts,
+    error: productsError,
   } = useProducts({ search: searchQuery });
 
   const {
     data: categories = [],
     isLoading: categoriesLoading,
+    error: categoriesError,
   } = useCategories();
 
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetchProducts();
-    setRefreshing(false);
+    try {
+      await refetchProducts();
+    } finally {
+      setTimeout(() => setRefreshing(false), 300);
+    }
   };
 
   const handleProductPress = (product: Product) => {
     // @ts-ignore
     navigation.navigate('ProductDetail', { product });
+  };
+
+  const handleSeeAllCategories = () => {
+    // @ts-ignore
+    navigation.getParent()?.navigate('Catégories');
+  };
+
+  const handleCategoryPress = (category: Category) => {
+    // @ts-ignore
+    navigation.navigate('CategoryProducts', { category });
   };
 
   return (
@@ -69,13 +87,18 @@ export default function HomeScreen() {
       }
     >
       {/* Header Section */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={[Colors.secondary, Colors.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <Text style={styles.welcomeText}>Bienvenue chez</Text>
         <Text style={styles.brandText}>ZIDA SOLAIRE</Text>
         <Text style={styles.tagline}>
           Votre partenaire en énergie solaire au Burkina Faso
         </Text>
-      </View>
+      </LinearGradient>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -90,92 +113,116 @@ export default function HomeScreen() {
       </View>
 
       {/* Stats Cards */}
-      <View style={styles.statsSection}>
-        <StatsCard
-          icon="cube-outline"
-          title="Produits disponibles"
-          value={products.length.toString()}
-          color={Colors.primary}
-        />
-        <StatsCard
-          icon="pricetag-outline"
-          title="Livraison gratuite"
-          value="Ouagadougou"
-          color={Colors.success}
-        />
-      </View>
+      <FadeInView delay={100}>
+        <View style={styles.statsSection}>
+          <StatsCard
+            icon="cube-outline"
+            title="Produits disponibles"
+            value={products.length.toString()}
+            color={Colors.secondary}
+          />
+          <StatsCard
+            icon="rocket-outline"
+            title="Livraison rapide"
+            value="24-48h"
+            color={Colors.accent}
+          />
+        </View>
+      </FadeInView>
 
       {/* Categories Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Catégories</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>Voir tout</Text>
-          </TouchableOpacity>
-        </View>
+      <FadeInView delay={200}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Catégories</Text>
+            <TouchableOpacity onPress={handleSeeAllCategories} activeOpacity={0.7}>
+              <Text style={styles.seeAll}>Voir tout</Text>
+            </TouchableOpacity>
+          </View>
 
-        {categoriesLoading ? (
-          <FlatList
-            data={[1, 2, 3, 4]}
-            keyExtractor={(item) => `cat-skeleton-${item}`}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesList}
-            renderItem={() => (
-              <View style={styles.categoryItem}>
-                <CategoryCardSkeleton />
-              </View>
-            )}
-          />
-        ) : (
-          <FlatList
-            data={categories}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesList}
-            renderItem={({ item }) => (
-              <View style={styles.categoryItem}>
-                <CategoryCard category={item} onPress={() => {}} />
-              </View>
-            )}
-          />
-        )}
-      </View>
+          {categoriesError ? (
+            <ErrorMessage
+              message="Impossible de charger les catégories"
+              onRetry={() => {}}
+            />
+          ) : categoriesLoading ? (
+            <FlatList
+              data={[1, 2, 3, 4]}
+              keyExtractor={(item) => `cat-skeleton-${item}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoriesList}
+              renderItem={() => (
+                <View style={styles.categoryItem}>
+                  <CategoryCardSkeleton />
+                </View>
+              )}
+            />
+          ) : (
+            <FlatList
+              data={categories}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoriesList}
+              renderItem={({ item }) => (
+                <View style={styles.categoryItem}>
+                  <CategoryCard 
+                    category={item} 
+                    onPress={() => handleCategoryPress(item)} 
+                  />
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </FadeInView>
 
       {/* Featured Products */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Produits populaires</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>Voir tout</Text>
-          </TouchableOpacity>
+      <FadeInView delay={300}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Produits populaires</Text>
+            <TouchableOpacity onPress={handleSeeAllCategories} activeOpacity={0.7}>
+              <Text style={styles.seeAll}>Voir tout</Text>
+            </TouchableOpacity>
+          </View>
+
+          {productsError ? (
+            <ErrorMessage
+              message="Impossible de charger les produits"
+              onRetry={refetchProducts}
+            />
+          ) : productsLoading ? (
+            <View style={styles.productsGrid}>
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <ProductCardSkeleton key={`prod-skeleton-${item}`} />
+              ))}
+            </View>
+          ) : products.length === 0 ? (
+            <EmptyState
+              icon="cube-outline"
+              title="Aucun produit"
+              message={
+                searchQuery
+                  ? 'Aucun produit ne correspond à votre recherche'
+                  : 'Aucun produit disponible pour le moment'
+              }
+            />
+          ) : (
+            <View style={styles.productsGrid}>
+              {products.slice(0, 6).map((product: Product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onPress={() => handleProductPress(product)}
+                />
+              ))}
+            </View>
+          )}
         </View>
+      </FadeInView>
 
-        {productsLoading ? (
-          <View style={styles.productsGrid}>
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <ProductCardSkeleton key={`prod-skeleton-${item}`} />
-            ))}
-          </View>
-        ) : products.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Aucun produit trouvé</Text>
-          </View>
-        ) : (
-          <View style={styles.productsGrid}>
-            {products.map((product: Product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onPress={() => handleProductPress(product)}
-              />
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Bottom Spacing */}
       <View style={styles.bottomSpacing} />
     </ScrollView>
   );
@@ -188,7 +235,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: Colors.primary,
     paddingTop: 20,
     paddingBottom: 30,
   },
@@ -265,15 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: 'space-between',
   },
-  emptyContainer: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
   bottomSpacing: {
-    height: 80,
+    height: 140,
   },
 });

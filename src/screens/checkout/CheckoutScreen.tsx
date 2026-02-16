@@ -15,17 +15,17 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
-import Button from '../../components/common/Button';
+import GradientButton from '../../components/common/GradientButton';
 import { useCartStore } from '../../store/cartStore';
 import { useCreateOrder } from '../../hooks/useOrders';
 
 export default function CheckoutScreen() {
   const navigation = useNavigation();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice } = useCartStore();
   const createOrder = useCreateOrder();
-  const [email, setEmail] = useState(''); // AJOUTER
 
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
@@ -64,7 +64,7 @@ export default function CheckoutScreen() {
         deliveryAddress: address,
         phone: phone,
         customerName: name,
-        customerEmail: email || undefined, // AJOUTER
+        customerEmail: email || undefined,
         notes: notes || undefined,
       });
 
@@ -100,8 +100,11 @@ export default function CheckoutScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Résumé de la commande */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Résumé de la commande</Text>
+        <View style={[styles.section, styles.sectionAccent]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="cart" size={24} color={Colors.accent} />
+            <Text style={styles.sectionTitle}>Résumé de la commande</Text>
+          </View>
           
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
@@ -133,8 +136,11 @@ export default function CheckoutScreen() {
         </View>
 
         {/* Informations de livraison */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations de livraison</Text>
+        <View style={[styles.section, styles.sectionSecondary]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="person" size={24} color={Colors.secondary} />
+            <Text style={styles.sectionTitle}>Informations de livraison</Text>
+          </View>
           
           <View style={styles.formCard}>
             {/* Nom complet */}
@@ -151,22 +157,23 @@ export default function CheckoutScreen() {
                 />
               </View>
             </View>
+
             {/* Email */}
-<View style={styles.inputGroup}>
-  <Text style={styles.label}>Email</Text>
-  <View style={styles.inputContainer}>
-    <Ionicons name="mail-outline" size={20} color={Colors.gray} />
-    <TextInput
-      style={styles.input}
-      placeholder="Ex: jean@example.com"
-      value={email}
-      onChangeText={setEmail}
-      keyboardType="email-address"
-      autoCapitalize="none"
-      placeholderTextColor={Colors.textSecondary}
-    />
-  </View>
-</View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail-outline" size={20} color={Colors.gray} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ex: jean@example.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor={Colors.textSecondary}
+                />
+              </View>
+            </View>
 
             {/* Téléphone */}
             <View style={styles.inputGroup}>
@@ -207,7 +214,7 @@ export default function CheckoutScreen() {
               </View>
             </View>
 
-            {/* Notes (optionnel) */}
+            {/* Notes */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Notes (optionnel)</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -219,7 +226,7 @@ export default function CheckoutScreen() {
                 />
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Instructions de livraison, demandes spéciales..."
+                  placeholder="Instructions de livraison..."
                   value={notes}
                   onChangeText={setNotes}
                   multiline
@@ -233,12 +240,15 @@ export default function CheckoutScreen() {
         </View>
 
         {/* Mode de paiement */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mode de paiement</Text>
+        <View style={[styles.section, styles.sectionPurple]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="wallet" size={24} color={Colors.purple} />
+            <Text style={styles.sectionTitle}>Mode de paiement</Text>
+          </View>
           
           <View style={styles.paymentCard}>
             <View style={styles.paymentOption}>
-              <Ionicons name="cash-outline" size={24} color={Colors.primary} />
+              <Ionicons name="cash-outline" size={32} color={Colors.success} />
               <View style={styles.paymentInfo}>
                 <Text style={styles.paymentTitle}>Paiement à la livraison</Text>
                 <Text style={styles.paymentDescription}>
@@ -252,13 +262,13 @@ export default function CheckoutScreen() {
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
-      {/* Footer avec bouton */}
+      {/* Footer */}
       <View style={styles.footer}>
-        <Button
+        <GradientButton
           title={createOrder.isPending ? 'Confirmation...' : 'Confirmer la commande'}
           onPress={handleSubmit}
           loading={createOrder.isPending}
-          style={styles.submitButton}
+          colors={[Colors.success, Colors.teal]}
         />
       </View>
     </KeyboardAvoidingView>
@@ -276,12 +286,27 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 16,
     paddingHorizontal: 16,
+    borderLeftWidth: 4,
+  },
+  sectionAccent: {
+    borderLeftColor: Colors.accent,
+  },
+  sectionSecondary: {
+    borderLeftColor: Colors.secondary,
+  },
+  sectionPurple: {
+    borderLeftColor: Colors.purple,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 12,
+    marginLeft: 12,
   },
   summaryCard: {
     backgroundColor: Colors.white,
@@ -344,9 +369,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   totalPrice: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: Colors.secondary,
   },
   formCard: {
     backgroundColor: Colors.white,
@@ -410,7 +435,7 @@ const styles = StyleSheet.create({
   },
   paymentInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
   },
   paymentTitle: {
     fontSize: 16,
@@ -423,7 +448,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   bottomSpacing: {
-    height: 100,
+    height: 140,
   },
   footer: {
     backgroundColor: Colors.white,
@@ -436,8 +461,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  submitButton: {
-    width: '100%',
   },
 });

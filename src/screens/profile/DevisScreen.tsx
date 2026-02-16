@@ -12,10 +12,12 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import Button from '../../components/common/Button';
+import GradientButton from '../../components/common/GradientButton';
+import { useSubmitDevis } from '../../hooks/useForms';
 
 const SYSTEM_TYPES = [
   { id: 'residential', label: 'Installation résidentielle', icon: 'home' },
@@ -35,6 +37,8 @@ const BUDGET_RANGES = [
 ];
 
 export default function DevisScreen() {
+  const submitDevis = useSubmitDevis();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -77,8 +81,15 @@ export default function DevisScreen() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Connecter à l'API /api/devis
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await submitDevis.mutateAsync({
+        name: formData.name,
+        email: formData.email || undefined,
+        phone: formData.phone,
+        address: formData.address,
+        systemType: formData.systemType,
+        estimatedBudget: formData.estimatedBudget || undefined,
+        message: formData.message || undefined,
+      });
 
       Alert.alert(
         'Demande envoyée !',
@@ -100,8 +111,11 @@ export default function DevisScreen() {
           },
         ]
       );
-    } catch (error) {
-      Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
+    } catch (error: any) {
+      Alert.alert(
+        'Erreur',
+        error.response?.data?.message || "Une erreur s'est produite. Veuillez réessayer."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -118,13 +132,16 @@ export default function DevisScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="document-text" size={60} color={Colors.primary} />
+        <LinearGradient
+          colors={[Colors.accent, Colors.primary]}
+          style={styles.header}
+        >
+          <Ionicons name="document-text" size={60} color={Colors.white} />
           <Text style={styles.title}>Demande de devis</Text>
           <Text style={styles.subtitle}>
             Obtenez un devis gratuit et personnalisé pour votre projet solaire
           </Text>
-        </View>
+        </LinearGradient>
 
         {/* Avantages */}
         <View style={styles.benefitsSection}>
@@ -146,7 +163,6 @@ export default function DevisScreen() {
         <View style={styles.formSection}>
           <Text style={styles.sectionTitle}>Vos informations</Text>
 
-          {/* Nom */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nom complet *</Text>
             <View style={styles.inputContainer}>
@@ -161,7 +177,6 @@ export default function DevisScreen() {
             </View>
           </View>
 
-          {/* Téléphone */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Téléphone *</Text>
             <View style={styles.inputContainer}>
@@ -177,7 +192,6 @@ export default function DevisScreen() {
             </View>
           </View>
 
-          {/* Email */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputContainer}>
@@ -194,7 +208,6 @@ export default function DevisScreen() {
             </View>
           </View>
 
-          {/* Adresse */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Adresse du projet *</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -219,7 +232,6 @@ export default function DevisScreen() {
 
           <Text style={styles.sectionTitle}>Votre projet</Text>
 
-          {/* Type de système */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Type de système *</Text>
             <View style={styles.systemTypeGrid}>
@@ -252,7 +264,6 @@ export default function DevisScreen() {
             </View>
           </View>
 
-          {/* Budget estimé */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Budget estimé</Text>
             {BUDGET_RANGES.map((budget, index) => (
@@ -279,7 +290,6 @@ export default function DevisScreen() {
             ))}
           </View>
 
-          {/* Message */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Détails supplémentaires</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -302,11 +312,11 @@ export default function DevisScreen() {
             </View>
           </View>
 
-          <Button
+          <GradientButton
             title={isSubmitting ? 'Envoi...' : 'Demander un devis gratuit'}
             onPress={handleSubmit}
             loading={isSubmitting}
-            style={styles.submitButton}
+            colors={[Colors.accent, Colors.primary]}
           />
 
           <Text style={styles.disclaimer}>
@@ -330,7 +340,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    backgroundColor: Colors.primary,
     padding: 32,
     alignItems: 'center',
   },
@@ -476,9 +485,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text,
   },
-  submitButton: {
-    marginTop: 8,
-  },
   disclaimer: {
     fontSize: 12,
     color: Colors.textSecondary,
@@ -487,6 +493,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   bottomSpacing: {
-    height: 32,
+    height: 140,
   },
 });

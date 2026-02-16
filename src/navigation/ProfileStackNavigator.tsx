@@ -6,11 +6,10 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import LoginScreen from '../screens/profile/LoginScreen';
 import RegisterScreen from '../screens/profile/RegisterScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
-import AddressesScreen from '../screens/profile/AddressesScreen';
-import PaymentMethodsScreen from '../screens/profile/PaymentMethodsScreen';
-import NotificationsScreen from '../screens/profile/NotificationsScreen';
-import RepairRequestScreen from '../screens/profile/RepairRequestScreen';
 import AboutScreen from '../screens/profile/AboutScreen';
+import ContactScreen from '../screens/profile/ContactScreen';
+import DevisScreen from '../screens/profile/DevisScreen';
+import InstallationRequestScreen from '../screens/profile/InstallationRequestScreen';
 import { Colors } from '../constants/colors';
 
 export type ProfileStackParamList = {
@@ -18,11 +17,10 @@ export type ProfileStackParamList = {
   Login: undefined;
   Register: undefined;
   EditProfile: undefined;
-  Addresses: undefined;
-  PaymentMethods: undefined;
-  Notifications: undefined;
-  RepairRequest: undefined;
   About: undefined;
+  Contact: undefined;
+  Devis: undefined;
+  InstallationRequest: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -58,32 +56,27 @@ export default function ProfileStackNavigator() {
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Addresses"
-        component={AddressesScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PaymentMethods"
-        component={PaymentMethodsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="RepairRequest"
-        component={RepairRequestScreen}
-        options={{ headerShown: false }}
+        options={{ title: 'Modifier le profil' }}
       />
       <Stack.Screen
         name="About"
         component={AboutScreen}
         options={{ title: 'À propos' }}
+      />
+      <Stack.Screen
+        name="Contact"
+        component={ContactScreen}
+        options={{ title: 'Contact' }}
+      />
+      <Stack.Screen
+        name="Devis"
+        component={DevisScreen}
+        options={{ title: 'Demande de devis' }}
+      />
+      <Stack.Screen
+        name="InstallationRequest"
+        component={InstallationRequestScreen}
+        options={{ title: "Demande d'installation" }}
       />
     </Stack.Navigator>
   );

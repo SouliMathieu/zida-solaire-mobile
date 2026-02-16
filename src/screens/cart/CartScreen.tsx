@@ -6,14 +6,14 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
 import CartItemCard from '../../components/product/CartItemCard';
-import Button from '../../components/common/Button';
+import GradientButton from '../../components/common/GradientButton';
 import { useCartStore } from '../../store/cartStore';
 
 export default function CartScreen() {
@@ -34,7 +34,12 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="cart-outline" size={80} color={Colors.light} />
+        <LinearGradient
+          colors={[Colors.primary, Colors.accent]}
+          style={styles.emptyIconContainer}
+        >
+          <Ionicons name="cart-outline" size={64} color={Colors.white} />
+        </LinearGradient>
         <Text style={styles.emptyTitle}>Votre panier est vide</Text>
         <Text style={styles.emptyText}>
           Ajoutez des produits pour commencer vos achats
@@ -56,17 +61,21 @@ export default function CartScreen() {
       {/* Footer avec total et bouton */}
       <View style={styles.footer}>
         <View style={styles.totalContainer}>
-          <View>
-            <Text style={styles.totalLabel}>Total ({totalItems} articles)</Text>
-            <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
+          <View style={styles.totalRow}>
+            <Ionicons name="receipt-outline" size={24} color={Colors.secondary} />
+            <View style={styles.totalInfo}>
+              <Text style={styles.totalLabel}>{totalItems} article{totalItems > 1 ? 's' : ''}</Text>
+              <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
+            </View>
           </View>
         </View>
 
-        <Button
+        <GradientButton
           title="Passer la commande"
           onPress={() => {
             navigation.navigate('Checkout' as never);
           }}
+          colors={[Colors.primary, Colors.accent]}
           style={styles.checkoutButton}
         />
       </View>
@@ -85,6 +94,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -99,7 +116,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingBottom: 160,
+    paddingBottom: 180,
   },
   footer: {
     backgroundColor: Colors.white,
@@ -116,15 +133,23 @@ const styles = StyleSheet.create({
   totalContainer: {
     marginBottom: 16,
   },
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  totalInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
   totalLabel: {
     fontSize: 14,
     color: Colors.textSecondary,
     marginBottom: 4,
   },
   totalPrice: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: Colors.secondary,
   },
   checkoutButton: {
     width: '100%',

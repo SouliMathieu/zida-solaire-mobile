@@ -1,32 +1,49 @@
 // src/components/common/Toast.tsx
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+
 interface ToastProps {
   message: string;
-  type: 'success' | 'error' | 'info';
+  type?: ToastType;
   visible: boolean;
   onHide: () => void;
+  duration?: number;
 }
 
-export default function Toast({ message, type, visible, onHide }: ToastProps) {
-  const opacity = new Animated.Value(0);
+const TOAST_CONFIG = {
+  success: { icon: 'checkmark-circle', color: Colors.success },
+  error: { icon: 'close-circle', color: Colors.error },
+  info: { icon: 'information-circle', color: Colors.info },
+  warning: { icon: 'warning', color: Colors.warning },
+};
+
+export default function Toast({
+  message,
+  type = 'info',
+  visible,
+  onHide,
+  duration = 3000,
+}: ToastProps) {
+  const translateY = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
     if (visible) {
       Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.delay(2500),
-        Animated.timing(opacity, {
+        Animated.spring(translateY, {
           toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }),
+        Animated.delay(duration),
+        Animated.timing(translateY, {
+          toValue: -100,
           duration: 300,
           useNativeDriver: true,
         }),
@@ -38,26 +55,16 @@ export default function Toast({ message, type, visible, onHide }: ToastProps) {
 
   if (!visible) return null;
 
-  const iconName = {
-    success: 'checkmark-circle',
-    error: 'close-circle',
-    info: 'information-circle',
-  }[type];
-
-  const backgroundColor = {
-    success: Colors.success,
-    error: Colors.error,
-    info: Colors.info,
-  }[type];
+  const config = TOAST_CONFIG[type];
 
   return (
     <Animated.View
       style={[
         styles.container,
-        { backgroundColor, opacity },
+        { transform: [{ translateY }], backgroundColor: config.color },
       ]}
     >
-      <Ionicons name={iconName as any} size={24} color={Colors.white} />
+      <Ionicons name={config.icon as any} size={24} color={Colors.white} />
       <Text style={styles.message}>{message}</Text>
     </Animated.View>
   );
@@ -66,7 +73,7 @@ export default function Toast({ message, type, visible, onHide }: ToastProps) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 60,
+    top: 50,
     left: 16,
     right: 16,
     flexDirection: 'row',
@@ -75,16 +82,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    zIndex: 9999,
+    shadowRadius: 8,
+    zIndex: 1000,
+    gap: 12,
   },
   message: {
     flex: 1,
     fontSize: 16,
-    color: Colors.white,
-    marginLeft: 12,
     fontWeight: '600',
+    color: Colors.white,
   },
 });

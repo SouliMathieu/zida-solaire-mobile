@@ -12,10 +12,12 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import Button from '../../components/common/Button';
+import GradientButton from '../../components/common/GradientButton';
+import { useSubmitInstallation } from '../../hooks/useForms';
 
 const PROPERTY_TYPES = [
   { id: 'house', label: 'Maison individuelle', icon: 'home' },
@@ -41,6 +43,8 @@ const MONTHLY_BILLS = [
 ];
 
 export default function InstallationRequestScreen() {
+  const submitInstallation = useSubmitInstallation();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -84,8 +88,16 @@ export default function InstallationRequestScreen() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Connecter à l'API /api/installation-requests
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await submitInstallation.mutateAsync({
+        name: formData.name,
+        email: formData.email || undefined,
+        phone: formData.phone,
+        address: formData.address,
+        propertyType: formData.propertyType,
+        roofType: formData.roofType || undefined,
+        averageMonthlyBill: formData.averageMonthlyBill || undefined,
+        notes: formData.notes || undefined,
+      });
 
       Alert.alert(
         'Demande enregistrée !',
@@ -108,8 +120,11 @@ export default function InstallationRequestScreen() {
           },
         ]
       );
-    } catch (error) {
-      Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
+    } catch (error: any) {
+      Alert.alert(
+        'Erreur',
+        error.response?.data?.message || "Une erreur s'est produite. Veuillez réessayer."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -126,20 +141,23 @@ export default function InstallationRequestScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="construct" size={60} color={Colors.primary} />
+        <LinearGradient
+          colors={[Colors.success, Colors.teal]}
+          style={styles.header}
+        >
+          <Ionicons name="construct" size={60} color={Colors.white} />
           <Text style={styles.title}>Demande d'installation</Text>
           <Text style={styles.subtitle}>
             Faites installer votre système solaire par nos experts
           </Text>
-        </View>
+        </LinearGradient>
 
         {/* Process */}
         <View style={styles.processSection}>
           <Text style={styles.sectionTitle}>Notre processus</Text>
 
           <View style={styles.processStep}>
-            <View style={styles.stepNumber}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.primary }]}>
               <Text style={styles.stepNumberText}>1</Text>
             </View>
             <View style={styles.stepContent}>
@@ -149,7 +167,7 @@ export default function InstallationRequestScreen() {
           </View>
 
           <View style={styles.processStep}>
-            <View style={styles.stepNumber}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.info }]}>
               <Text style={styles.stepNumberText}>2</Text>
             </View>
             <View style={styles.stepContent}>
@@ -159,7 +177,7 @@ export default function InstallationRequestScreen() {
           </View>
 
           <View style={styles.processStep}>
-            <View style={styles.stepNumber}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.accent }]}>
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <View style={styles.stepContent}>
@@ -169,7 +187,7 @@ export default function InstallationRequestScreen() {
           </View>
 
           <View style={styles.processStep}>
-            <View style={styles.stepNumber}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.success }]}>
               <Text style={styles.stepNumberText}>4</Text>
             </View>
             <View style={styles.stepContent}>
@@ -183,7 +201,6 @@ export default function InstallationRequestScreen() {
         <View style={styles.formSection}>
           <Text style={styles.sectionTitle}>Vos informations</Text>
 
-          {/* Nom */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nom complet *</Text>
             <View style={styles.inputContainer}>
@@ -198,7 +215,6 @@ export default function InstallationRequestScreen() {
             </View>
           </View>
 
-          {/* Téléphone */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Téléphone *</Text>
             <View style={styles.inputContainer}>
@@ -214,7 +230,6 @@ export default function InstallationRequestScreen() {
             </View>
           </View>
 
-          {/* Email */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputContainer}>
@@ -231,7 +246,6 @@ export default function InstallationRequestScreen() {
             </View>
           </View>
 
-          {/* Adresse */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Adresse du site *</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -256,7 +270,6 @@ export default function InstallationRequestScreen() {
 
           <Text style={styles.sectionTitle}>Détails de la propriété</Text>
 
-          {/* Type de propriété */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Type de propriété *</Text>
             <View style={styles.propertyTypeGrid}>
@@ -289,7 +302,6 @@ export default function InstallationRequestScreen() {
             </View>
           </View>
 
-          {/* Type de toiture */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Type de toiture</Text>
             {ROOF_TYPES.map((roof, index) => (
@@ -314,7 +326,6 @@ export default function InstallationRequestScreen() {
             ))}
           </View>
 
-          {/* Facture mensuelle */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Facture d'électricité mensuelle moyenne</Text>
             {MONTHLY_BILLS.map((bill, index) => (
@@ -341,7 +352,6 @@ export default function InstallationRequestScreen() {
             ))}
           </View>
 
-          {/* Notes */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Informations supplémentaires</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -364,11 +374,11 @@ export default function InstallationRequestScreen() {
             </View>
           </View>
 
-          <Button
+          <GradientButton
             title={isSubmitting ? 'Envoi...' : 'Demander une visite technique'}
             onPress={handleSubmit}
             loading={isSubmitting}
-            style={styles.submitButton}
+            colors={[Colors.success, Colors.teal]}
           />
 
           <Text style={styles.disclaimer}>
@@ -392,7 +402,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    backgroundColor: Colors.primary,
     padding: 32,
     alignItems: 'center',
   },
@@ -429,7 +438,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -577,9 +585,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text,
   },
-  submitButton: {
-    marginTop: 8,
-  },
   disclaimer: {
     fontSize: 12,
     color: Colors.textSecondary,
@@ -588,6 +593,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   bottomSpacing: {
-    height: 32,
+    height: 140,
   },
 });

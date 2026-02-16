@@ -1,0 +1,31 @@
+// src/hooks/useToast.ts
+
+import { useState } from 'react';
+
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export const useToast = () => {
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: ToastType;
+  }>({
+    visible: false,
+    message: '',
+    type: 'info',
+  });
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToast({ visible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast((prev) => ({ ...prev, visible: false }));
+  };
+
+  return {
+    toast,
+    showToast,
+    hideToast,
+  };
+};

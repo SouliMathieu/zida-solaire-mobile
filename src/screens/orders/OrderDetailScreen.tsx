@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bottomSpacing: {
-    height: 100,
+    height: 140,
   },
   footer: {
     backgroundColor: Colors.white,
@@ -471,4 +471,5 @@ const styles = StyleSheet.create({
   cancelButton: {
     borderColor: Colors.error,
   },
+  
 });

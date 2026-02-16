@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
@@ -14,16 +15,24 @@ interface StatsCardProps {
 }
 
 export default function StatsCard({ icon, title, value, color }: StatsCardProps) {
+  // Créer une version plus claire de la couleur pour le gradient
+  const gradientColors: [string, string] = [color, `${color}CC`];
+
   return (
-    <View style={[styles.card, { backgroundColor: `${color}15` }]}>
-      <View style={[styles.iconContainer, { backgroundColor: color }]}>
-        <Ionicons name={icon as any} size={24} color={Colors.white} />
+    <LinearGradient
+      colors={gradientColors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.card}
+    >
+      <View style={styles.iconContainer}>
+        <Ionicons name={icon as any} size={28} color={Colors.white} />
       </View>
       <View style={styles.content}>
+        <Text style={styles.value}>{value}</Text>
         <Text style={styles.title}>{title}</Text>
-        <Text style={[styles.value, { color }]}>{value}</Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -32,27 +41,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   content: {
     flex: 1,
   },
-  title: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+  value: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.white,
     marginBottom: 4,
   },
-  value: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  title: {
+    fontSize: 14,
+    color: Colors.white,
+    opacity: 0.9,
   },
 });
