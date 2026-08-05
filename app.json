@@ -25,6 +25,14 @@
       },
       "package": "com.zidasolaire.mobile"
     },
-    "platforms": ["ios", "android"]
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3275d822-55c4-4de6-9a73-58a2fbde2346"
+      }
+    }
   }
 }

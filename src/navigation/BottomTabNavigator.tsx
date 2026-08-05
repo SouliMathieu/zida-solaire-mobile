@@ -3,6 +3,7 @@
 import React from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -29,14 +30,19 @@ function CartIconWithBadge({ color, size }: { color: string; size: number }) {
 }
 
 export default function BottomTabNavigator() {
+  const insets = useSafeAreaInsets();
+  // Hauteur de base de la barre + espace réel occupé par les boutons/gestes du téléphone
+  const baseHeight = 50;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 10);
+
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray,
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 90 : 75, // Augmenté
-          paddingBottom: Platform.OS === 'ios' ? 30 : 15, // Augmenté
+          height: baseHeight + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 10,
           backgroundColor: Colors.white,
           borderTopWidth: 0, // Supprimé la bordure
