@@ -11,6 +11,8 @@ import ContactScreen from '../screens/profile/ContactScreen';
 import DevisScreen from '../screens/profile/DevisScreen';
 import InstallationRequestScreen from '../screens/profile/InstallationRequestScreen';
 import RepairRequestV2Screen from '../screens/profile/RepairRequestV2Screen';
+import CartStackNavigator from './CartStackNavigator';
+import OrdersStackNavigator from './OrdersStackNavigator';
 import { Colors } from '../constants/colors';
 
 export type ProfileStackParamList = {
@@ -23,6 +25,8 @@ export type ProfileStackParamList = {
   Devis: undefined;
   InstallationRequest: undefined;
   RepairRequest: undefined;
+  CartArea: undefined;
+  OrdersArea: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -37,7 +41,7 @@ export default function ProfileStackNavigator() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Profil' }} />
+      <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Mon compte' }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Connexion' }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Inscription' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Modifier le profil' }} />
@@ -46,6 +50,8 @@ export default function ProfileStackNavigator() {
       <Stack.Screen name="Devis" component={DevisScreen} options={{ title: 'Demande de devis' }} />
       <Stack.Screen name="InstallationRequest" component={InstallationRequestScreen} options={{ title: "Demande d'installation" }} />
       <Stack.Screen name="RepairRequest" component={RepairRequestV2Screen} options={{ title: 'Assistance / SAV' }} />
+      <Stack.Screen name="CartArea" component={CartStackNavigator} options={{ title: 'Mon panier', headerShown: false }} />
+      <Stack.Screen name="OrdersArea" component={OrdersStackNavigator} options={{ title: 'Mes commandes', headerShown: false }} />
     </Stack.Navigator>
   );
 }
