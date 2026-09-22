@@ -10,6 +10,7 @@ import AboutScreen from '../screens/profile/AboutScreen';
 import ContactScreen from '../screens/profile/ContactScreen';
 import DevisScreen from '../screens/profile/DevisScreen';
 import InstallationRequestScreen from '../screens/profile/InstallationRequestScreen';
+import RepairRequestScreen from '../screens/profile/RepairRequestScreen';
 import { Colors } from '../constants/colors';
 
 export type ProfileStackParamList = {
@@ -21,6 +22,7 @@ export type ProfileStackParamList = {
   Contact: undefined;
   Devis: undefined;
   InstallationRequest: undefined;
+  RepairRequest: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -30,12 +32,13 @@ export default function ProfileStackNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: Colors.primary,
+          backgroundColor: Colors.white,
         },
-        headerTintColor: Colors.white,
+        headerTintColor: Colors.text,
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: '800',
         },
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen
@@ -77,6 +80,11 @@ export default function ProfileStackNavigator() {
         name="InstallationRequest"
         component={InstallationRequestScreen}
         options={{ title: "Demande d'installation" }}
+      />
+      <Stack.Screen
+        name="RepairRequest"
+        component={RepairRequestScreen}
+        options={{ title: 'Assistance / SAV' }}
       />
     </Stack.Navigator>
   );
