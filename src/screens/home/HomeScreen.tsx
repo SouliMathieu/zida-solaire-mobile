@@ -90,10 +90,10 @@ export default function HomeScreen() {
             <Text style={styles.brandAccent}>SOLAIRE</Text>
           </View>
           <View style={styles.topActions}>
-            <TouchableOpacity style={styles.roundButton} onPress={() => goToTab('Profil')}>
+            <TouchableOpacity style={styles.roundButton} onPress={() => goToTab('Compte')}>
               <Ionicons name="notifications-outline" size={22} color={Colors.white} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.roundButton} onPress={() => goToTab('Panier')}>
+            <TouchableOpacity style={styles.roundButton} onPress={() => goToTab('Compte', 'CartArea')}>
               <Ionicons name="cart-outline" size={22} color={Colors.white} />
             </TouchableOpacity>
           </View>
@@ -128,16 +128,16 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.quickActions}>
-        <QuickActionCard icon="grid-outline" label="Solutions" onPress={() => goToTab('Catégories')} />
-        <QuickActionCard icon="calculator-outline" label="Assistant" onPress={() => navigation.navigate('SolarAssistant')} />
-        <QuickActionCard icon="construct-outline" label="Installation" onPress={() => goToTab('Profil', 'InstallationRequest')} />
-        <QuickActionCard icon="headset-outline" label="SAV" onPress={() => goToTab('Profil', 'RepairRequest')} />
+        <QuickActionCard icon="grid-outline" label="Solutions" onPress={() => goToTab('Solutions')} />
+        <QuickActionCard icon="calculator-outline" label="Assistant" onPress={() => goToTab('Mon énergie', 'SolarAssistant')} />
+        <QuickActionCard icon="construct-outline" label="Installation" onPress={() => goToTab('Assistance', 'InstallationRequest')} />
+        <QuickActionCard icon="headset-outline" label="SAV" onPress={() => goToTab('Assistance', 'RepairRequest')} />
       </View>
 
       <TouchableOpacity
         style={styles.assistantCard}
         activeOpacity={0.86}
-        onPress={() => navigation.navigate('SolarAssistant')}
+        onPress={() => goToTab('Mon énergie', 'SolarAssistant')}
       >
         <View style={styles.assistantIcon}>
           <Ionicons name="sunny-outline" size={28} color={Colors.primary} />
@@ -155,7 +155,7 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Solutions populaires</Text>
             <Text style={styles.sectionSubtitle}>Explorez les principales catégories ZIDA</Text>
           </View>
-          <TouchableOpacity onPress={() => goToTab('Catégories')}>
+          <TouchableOpacity onPress={() => goToTab('Solutions')}>
             <Text style={styles.seeAll}>Voir tout</Text>
           </TouchableOpacity>
         </View>
@@ -216,7 +216,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           {!searchQuery && (
-            <TouchableOpacity onPress={() => goToTab('Catégories')}>
+            <TouchableOpacity onPress={() => goToTab('Solutions')}>
               <Text style={styles.seeAll}>Voir tout</Text>
             </TouchableOpacity>
           )}
