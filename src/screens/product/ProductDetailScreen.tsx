@@ -1,33 +1,28 @@
 // src/screens/product/ProductDetailScreen.tsx
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  TouchableOpacity,
-  Share,
-  Alert,
-} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Share, Alert, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-// @ts-expect-error - Expo vector icons types issue
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
-import Button from '../../components/common/Button';
+import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { useCartStore } from '../../store/cartStore';
-import { HomeStackParamList } from '../../navigation/HomeStackNavigator';
+import { useProduct } from '../../hooks/useProducts';
+import { Product } from '../../types';
 
 const { width } = Dimensions.get('window');
+const formatPrice = (price: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(price);
 
-type ProductDetailRouteProp = RouteProp<HomeStackParamList, 'ProductDetail'>;
+type ProductDetailParams = { product: Product };
 
 export default function ProductDetailScreen() {
-  const route = useRoute<ProductDetailRouteProp>();
-  const navigation = useNavigation();
-  const { product } = route.params;
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+  const initialProduct = (route.params as ProductDetailParams).product;
+  const { data: fullProduct, isLoading } = useProduct(initialProduct.id);
+  const product = fullProduct || initialProduct;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -35,417 +30,222 @@ export default function ProductDetailScreen() {
 
   const cartItem = getItem(product.id);
   const currentQuantityInCart = cartItem?.quantity || 0;
+  const productImages = useMemo(() => {
+    const images = product.images?.filter(Boolean) || [];
+    return images.length ? images : [product.image];
+  }, [product.images, product.image]);
 
-  // Gérer à la fois image (string) et images (array) pour compatibilité
-  const productImages = product.images || [product.image];
-  const hasMultipleImages = productImages.length > 1;
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  const availableStock = Math.max(0, product.stock - currentQuantityInCart);
+  const inStock = product.stock > 0 && product.isAvailable !== false;
+  const canAddToCart = inStock && availableStock > 0 && quantity <= availableStock;
+  const hasDiscount = !!product.compareAtPrice && product.compareAtPrice > product.price;
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
-    Alert.alert(
-      'Ajouté au panier',
-      `${quantity} ${quantity > 1 ? 'articles ajoutés' : 'article ajouté'} au panier`,
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Ajouté au panier', `${quantity} article${quantity > 1 ? 's' : ''} ajouté${quantity > 1 ? 's' : ''}.`, [
+      { text: 'Continuer' },
+      { text: 'Voir le panier', onPress: () => navigation.getParent()?.getParent()?.navigate('Compte', { screen: 'CartArea' }) },
+    ]);
   };
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        message: `Découvrez ${product.name} chez ZIDA SOLAIRE\n\nPrix: ${formatPrice(product.price)}\n\n${product.description}`,
-        title: product.name,
-      });
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de partager le produit');
+      await Share.share({ message: `${product.name} – ${formatPrice(product.price)} chez ZIDA SOLAIRE` });
+    } catch {
+      Alert.alert('Erreur', 'Impossible de partager ce produit.');
     }
   };
-
-  const handleIncreaseQuantity = () => {
-    if (quantity + currentQuantityInCart < product.stock) {
-      setQuantity(quantity + 1);
-    }
-  };
-
-  const handleDecreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
-
-  const availableStock = product.stock - currentQuantityInCart;
-  const canAddToCart = availableStock > 0 && quantity <= availableStock;
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Images du produit */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={{
-              uri: productImages[selectedImageIndex] || 'https://via.placeholder.com/400',
-            }}
-            style={styles.mainImage}
-            contentFit="cover"
-            transition={300}
-          />
-
-          {/* Indicateurs d'images */}
-          {hasMultipleImages && (
-            <View style={styles.imageIndicators}>
-              {productImages.map((_, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    selectedImageIndex === index && styles.activeIndicator,
-                  ]}
-                  onPress={() => setSelectedImageIndex(index)}
-                />
-              ))}
-            </View>
-          )}
-
-          {/* Badge stock */}
-          <View style={[
-            styles.stockBadge,
-            { backgroundColor: product.stock > 0 ? Colors.success : Colors.error }
-          ]}>
-            <Text style={styles.stockText}>
-              {product.stock > 0
-                ? `${product.stock} en stock`
-                : 'Rupture de stock'}
-            </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
+        <View style={styles.imageSection}>
+          <Image source={{ uri: productImages[selectedImageIndex] }} style={styles.mainImage} contentFit="cover" transition={200} />
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+            <Ionicons name="share-social-outline" size={21} color={Colors.text} />
+          </TouchableOpacity>
+          <View style={[styles.stockPill, !inStock && styles.stockPillOut]}>
+            <Ionicons name={inStock ? 'checkmark-circle' : 'close-circle'} size={16} color={inStock ? Colors.success : Colors.error} />
+            <Text style={[styles.stockPillText, !inStock && { color: Colors.error }]}>{inStock ? `${product.stock} en stock` : 'Rupture de stock'}</Text>
           </View>
         </View>
 
-        {/* Miniatures des images */}
-        {hasMultipleImages && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.thumbnailsContainer}
-            contentContainerStyle={styles.thumbnails}
-          >
+        {productImages.length > 1 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbnails}>
             {productImages.map((image, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => setSelectedImageIndex(index)}
-                style={[
-                  styles.thumbnail,
-                  selectedImageIndex === index && styles.activeThumbnail,
-                ]}
-              >
-                <Image
-                  source={{ uri: image }}
-                  style={styles.thumbnailImage}
-                  contentFit="cover"
-                />
+              <TouchableOpacity key={`${image}-${index}`} style={[styles.thumbnail, selectedImageIndex === index && styles.thumbnailActive]} onPress={() => setSelectedImageIndex(index)}>
+                <Image source={{ uri: image }} style={styles.thumbnailImage} contentFit="cover" />
               </TouchableOpacity>
             ))}
           </ScrollView>
         )}
 
-        {/* Informations du produit */}
-        <View style={styles.contentContainer}>
+        <View style={styles.content}>
+          {isLoading && (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.loadingText}>Chargement des détails...</Text>
+            </View>
+          )}
+
+          {!!product.category?.name && <Text style={styles.category}>{product.category.name}</Text>}
           <Text style={styles.productName}>{product.name}</Text>
+          {!!product.sku && <Text style={styles.sku}>Réf. {product.sku}</Text>}
 
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{formatPrice(product.price)}</Text>
+            <View>
+              <Text style={styles.price}>{formatPrice(product.price)}</Text>
+              {hasDiscount && <Text style={styles.oldPrice}>{formatPrice(product.compareAtPrice as number)}</Text>}
+            </View>
             {currentQuantityInCart > 0 && (
-              <View style={styles.cartBadge}>
-                <Ionicons name="cart" size={16} color={Colors.white} />
-                <Text style={styles.cartBadgeText}>{currentQuantityInCart}</Text>
+              <View style={styles.inCartBadge}>
+                <Ionicons name="bag-check-outline" size={16} color={Colors.primary} />
+                <Text style={styles.inCartText}>{currentQuantityInCart} au panier</Text>
               </View>
             )}
           </View>
 
-          {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{product.description}</Text>
+          {!!product.shortDescription && <Text style={styles.shortDescription}>{product.shortDescription}</Text>}
+
+          <View style={styles.reassuranceRow}>
+            <Reassurance icon="shield-checkmark-outline" title="Garantie" text={product.warranty || 'Selon fabricant'} />
+            <Reassurance icon="construct-outline" title="Installation" text="Disponible avec ZIDA" />
+            <Reassurance icon="call-outline" title="Conseil" text="Assistance technique" />
           </View>
 
-          {/* Spécifications */}
-          {product.specifications && Object.keys(product.specifications).length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Spécifications techniques</Text>
-              <View style={styles.specificationsContainer}>
-                {Object.entries(product.specifications).map(([key, value]) => (
-                  <View key={key} style={styles.specRow}>
+          {!!product.description && (
+            <Section title="Description">
+              <Text style={styles.description}>{product.description}</Text>
+            </Section>
+          )}
+
+          {!!product.features?.length && (
+            <Section title="Points forts">
+              {product.features.map((feature, index) => (
+                <View style={styles.featureRow} key={`${feature}-${index}`}>
+                  <Ionicons name="checkmark-circle" size={19} color={Colors.success} />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
+            </Section>
+          )}
+
+          {!!product.specifications && Object.keys(product.specifications).length > 0 && (
+            <Section title="Caractéristiques techniques">
+              <View style={styles.specCard}>
+                {Object.entries(product.specifications).map(([key, value], index, array) => (
+                  <View style={[styles.specRow, index === array.length - 1 && { borderBottomWidth: 0 }]} key={key}>
                     <Text style={styles.specLabel}>{key}</Text>
-                    <Text style={styles.specValue}>{value}</Text>
+                    <Text style={styles.specValue}>{String(value)}</Text>
                   </View>
                 ))}
               </View>
-            </View>
+            </Section>
           )}
 
-          {/* Informations de livraison */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informations de livraison</Text>
-            <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={20} color={Colors.primary} />
-              <Text style={styles.infoText}>Livraison à Ouagadougou</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons name="time-outline" size={20} color={Colors.primary} />
-              <Text style={styles.infoText}>Délai: 2-5 jours ouvrables</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons name="shield-checkmark-outline" size={20} color={Colors.primary} />
-              <Text style={styles.infoText}>Garantie fabricant incluse</Text>
-            </View>
-          </View>
-        </View>
+          {!!product.warranty && (
+            <Section title="Garantie">
+              <View style={styles.infoCard}>
+                <Ionicons name="shield-checkmark" size={23} color={Colors.success} />
+                <Text style={styles.infoCardText}>{product.warranty}</Text>
+              </View>
+            </Section>
+          )}
 
-        <View style={styles.bottomSpacing} />
+          <Section title="Besoin d'aide avant l'achat ?">
+            <TouchableOpacity style={styles.adviceCard} onPress={() => navigation.getParent()?.getParent()?.navigate('Assistance')}>
+              <View style={styles.adviceIcon}><Ionicons name="headset-outline" size={25} color={Colors.primary} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.adviceTitle}>Parler à ZIDA SOLAIRE</Text>
+                <Text style={styles.adviceText}>Demandez conseil pour vérifier la compatibilité avec votre projet.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
+            </TouchableOpacity>
+          </Section>
+        </View>
       </ScrollView>
 
-      {/* Footer avec actions */}
       <View style={styles.footer}>
-        {/* Sélecteur de quantité */}
-        <View style={styles.quantityContainer}>
-          <Text style={styles.quantityLabel}>Quantité</Text>
-          <View style={styles.quantitySelector}>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={handleDecreaseQuantity}
-              disabled={quantity <= 1}
-            >
-              <Ionicons name="remove" size={20} color={Colors.primary} />
-            </TouchableOpacity>
-
-            <Text style={styles.quantityValue}>{quantity}</Text>
-
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={handleIncreaseQuantity}
-              disabled={quantity >= availableStock}
-            >
-              <Ionicons name="add" size={20} color={Colors.primary} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.quantitySelector}>
+          <TouchableOpacity style={styles.quantityButton} onPress={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}>
+            <Ionicons name="remove" size={20} color={Colors.secondary} />
+          </TouchableOpacity>
+          <Text style={styles.quantityValue}>{quantity}</Text>
+          <TouchableOpacity style={styles.quantityButton} onPress={() => setQuantity(Math.min(availableStock, quantity + 1))} disabled={quantity >= availableStock}>
+            <Ionicons name="add" size={20} color={Colors.secondary} />
+          </TouchableOpacity>
         </View>
-
-        {/* Bouton ajouter au panier */}
-        <Button
-          title={canAddToCart ? 'Ajouter au panier' : 'Stock insuffisant'}
-          onPress={handleAddToCart}
-          disabled={!canAddToCart}
-          style={styles.addButton}
-        />
+        <TouchableOpacity style={[styles.addButton, !canAddToCart && styles.addButtonDisabled]} onPress={handleAddToCart} disabled={!canAddToCart}>
+          <Ionicons name="bag-add-outline" size={20} color={Colors.white} />
+          <Text style={styles.addButtonText}>{canAddToCart ? 'Ajouter au panier' : 'Indisponible'}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return <View style={styles.section}><Text style={styles.sectionTitle}>{title}</Text>{children}</View>;
+}
+
+function Reassurance({ icon, title, text }: { icon: string; title: string; text: string }) {
+  return (
+    <View style={styles.reassuranceItem}>
+      <Ionicons name={icon as any} size={21} color={Colors.primary} />
+      <Text style={styles.reassuranceTitle}>{title}</Text>
+      <Text style={styles.reassuranceText} numberOfLines={2}>{text}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  imageContainer: {
-    position: 'relative',
-  },
-  mainImage: {
-    width: width,
-    height: width,
-    backgroundColor: Colors.light,
-  },
-  imageIndicators: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginHorizontal: 4,
-  },
-  activeIndicator: {
-    backgroundColor: Colors.white,
-    width: 24,
-  },
-  stockBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  stockText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  thumbnailsContainer: {
-    backgroundColor: Colors.white,
-  },
-  thumbnails: {
-    padding: 16,
-    gap: 8,
-  },
-  thumbnail: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginRight: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  activeThumbnail: {
-    borderColor: Colors.primary,
-  },
-  thumbnailImage: {
-    width: '100%',
-    height: '100%',
-  },
-  contentContainer: {
-    backgroundColor: Colors.white,
-    padding: 16,
-    marginTop: 8,
-  },
-  productName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  price: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.secondary,
-  },
-  cartBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
-  },
-  cartBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: Colors.textSecondary,
-  },
-  specificationsContainer: {
-    backgroundColor: Colors.background,
-    borderRadius: 8,
-    padding: 12,
-  },
-  specRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light,
-  },
-  specLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    flex: 1,
-  },
-  specValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-    flex: 1,
-    textAlign: 'right',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    color: Colors.text,
-    marginLeft: 12,
-  },
-  bottomSpacing: {
-    height: 120,
-  },
-  footer: {
-    backgroundColor: Colors.white,
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  quantityContainer: {
-    marginBottom: 12,
-  },
-  quantityLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  quantitySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.light,
-    borderRadius: 8,
-    padding: 4,
-  },
-  quantityButton: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text,
-    marginHorizontal: 24,
-    minWidth: 32,
-    textAlign: 'center',
-  },
-  addButton: {
-    width: '100%',
-  },
+  container: { flex: 1, backgroundColor: '#F6F8FB' },
+  imageSection: { position: 'relative', backgroundColor: Colors.white },
+  mainImage: { width, height: width * 0.88, backgroundColor: '#EDF1F4' },
+  shareButton: { position: 'absolute', top: 16, right: 16, width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.94)', alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+  stockPill: { position: 'absolute', left: 16, bottom: 16, flexDirection: 'row', alignItems: 'center', backgroundColor: '#EAF8F0', paddingHorizontal: 11, paddingVertical: 7, borderRadius: Radius.pill },
+  stockPillOut: { backgroundColor: '#FFF0F0' },
+  stockPillText: { color: '#18794E', fontSize: 11, fontWeight: '800', marginLeft: 5 },
+  thumbnails: { paddingHorizontal: Spacing.lg, paddingVertical: 12, backgroundColor: Colors.white },
+  thumbnail: { width: 64, height: 64, borderRadius: Radius.sm, overflow: 'hidden', marginRight: 9, borderWidth: 2, borderColor: 'transparent' },
+  thumbnailActive: { borderColor: Colors.primary },
+  thumbnailImage: { width: '100%', height: '100%' },
+  content: { padding: Spacing.lg },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  loadingText: { marginLeft: 8, color: Colors.textSecondary, fontSize: 12 },
+  category: { color: Colors.primary, fontWeight: '900', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.7 },
+  productName: { color: Colors.text, fontSize: Typography.h1, lineHeight: 31, fontWeight: '900', marginTop: 5 },
+  sku: { color: Colors.textSecondary, marginTop: 5, fontSize: 12 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 },
+  price: { color: Colors.secondary, fontSize: 28, fontWeight: '900' },
+  oldPrice: { color: Colors.gray, textDecorationLine: 'line-through', marginTop: 2 },
+  inCartBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF3EC', borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 7 },
+  inCartText: { color: Colors.primary, fontWeight: '800', fontSize: 11, marginLeft: 5 },
+  shortDescription: { color: Colors.textSecondary, lineHeight: 21, marginTop: 14 },
+  reassuranceRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 22 },
+  reassuranceItem: { width: '31%', backgroundColor: Colors.white, borderRadius: Radius.md, padding: 11, ...Shadow.card },
+  reassuranceTitle: { color: Colors.text, fontSize: 11, fontWeight: '900', marginTop: 6 },
+  reassuranceText: { color: Colors.textSecondary, fontSize: 9, lineHeight: 13, marginTop: 2 },
+  section: { marginTop: 28 },
+  sectionTitle: { fontSize: Typography.h3, fontWeight: '900', color: Colors.text, marginBottom: 12 },
+  description: { color: Colors.textSecondary, fontSize: 14, lineHeight: 22 },
+  featureRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 9 },
+  featureText: { flex: 1, color: Colors.text, marginLeft: 8, lineHeight: 20 },
+  specCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, paddingHorizontal: Spacing.lg, ...Shadow.card },
+  specRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: '#EDF0F3' },
+  specLabel: { flex: 1, color: Colors.textSecondary, fontSize: 13 },
+  specValue: { flex: 1, color: Colors.text, textAlign: 'right', fontSize: 13, fontWeight: '800' },
+  infoCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#EDF9F2', borderRadius: Radius.lg, padding: Spacing.lg },
+  infoCardText: { flex: 1, marginLeft: 10, color: Colors.text, lineHeight: 20 },
+  adviceCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, ...Shadow.card },
+  adviceIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFF3EC', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  adviceTitle: { color: Colors.text, fontWeight: '900' },
+  adviceText: { color: Colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, padding: Spacing.lg, borderTopWidth: 1, borderTopColor: '#E8ECF0', ...Shadow.floating },
+  quantitySelector: { height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F4F7', borderRadius: Radius.md, marginRight: 10 },
+  quantityButton: { width: 40, height: 50, alignItems: 'center', justifyContent: 'center' },
+  quantityValue: { minWidth: 28, textAlign: 'center', fontWeight: '900', color: Colors.text },
+  addButton: { flex: 1, height: 50, borderRadius: Radius.md, backgroundColor: Colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  addButtonDisabled: { backgroundColor: '#AEB8C2' },
+  addButtonText: { color: Colors.white, fontWeight: '900', marginLeft: 8 },
 });
