@@ -1,130 +1,74 @@
-// src/navigation/BottomTabNavigator.tsx
-
 import React from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// @ts-expect-error - Expo vector icons types issue
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
-import CartBadge from '../components/common/CartBadge';
-import { useCartStore } from '../store/cartStore';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import CategoriesStackNavigator from './CategoriesStackNavigator';
-import CartStackNavigator from './CartStackNavigator';
-import OrdersStackNavigator from './OrdersStackNavigator';
+import EnergyStackNavigator from './EnergyStackNavigator';
+import SupportStackNavigator from './SupportStackNavigator';
 import ProfileStackNavigator from './ProfileStackNavigator';
 
 const Tab = createBottomTabNavigator();
 
-function CartIconWithBadge({ color, size }: { color: string; size: number }) {
-  const totalItems = useCartStore((state) => state.getTotalItems());
-
-  return (
-    <View style={styles.iconContainer}>
-      <Ionicons name="cart" size={size} color={color} />
-      <CartBadge count={totalItems} />
-    </View>
-  );
-}
-
 export default function BottomTabNavigator() {
   const insets = useSafeAreaInsets();
-  // Hauteur de base de la barre + espace réel occupé par les boutons/gestes du téléphone
-  const baseHeight = 50;
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 10);
+  const baseHeight = 54;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 18 : 10);
 
   return (
     <Tab.Navigator
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.gray,
+        tabBarInactiveTintColor: '#7A8794',
         tabBarStyle: {
           height: baseHeight + bottomPadding,
           paddingBottom: bottomPadding,
-          paddingTop: 10,
+          paddingTop: 8,
           backgroundColor: Colors.white,
-          borderTopWidth: 0, // Supprimé la bordure
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
+          borderTopWidth: 0,
+          elevation: 14,
+          shadowColor: '#0B2545',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.09,
+          shadowRadius: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginBottom: Platform.OS === 'ios' ? 0 : 5,
-        },
-        tabBarIconStyle: {
-          marginTop: 5,
-        },
-        headerStyle: {
-          backgroundColor: Colors.primary,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        headerTintColor: Colors.white,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          fontSize: 18,
+          fontSize: 10,
+          fontWeight: '700',
+          marginBottom: Platform.OS === 'ios' ? 0 : 3,
         },
       }}
     >
       <Tab.Screen
         name="Accueil"
         component={HomeStackNavigator}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
-        name="Catégories"
+        name="Solutions"
         component={CategoriesStackNavigator}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
-        name="Panier"
-        component={CartStackNavigator}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <CartIconWithBadge color={color} size={size} />
-          ),
-        }}
+        name="Mon énergie"
+        component={EnergyStackNavigator}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="sunny-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
-        name="Commandes"
-        component={OrdersStackNavigator}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt" size={size} color={color} />
-          ),
-        }}
+        name="Assistance"
+        component={SupportStackNavigator}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="headset-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
-        name="Profil"
+        name="Compte"
         component={ProfileStackNavigator}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} /> }}
       />
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  iconContainer: {
-    width: 28,
-    height: 28,
-    position: 'relative',
-  },
-});
