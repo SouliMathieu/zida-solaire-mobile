@@ -1,36 +1,69 @@
 // src/hooks/useOrders.ts
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  createOrder as createOrderApi,
-} from '../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createOrder as createOrderApi, fetchCustomerOrders } from '../services/api';
 import { useCartStore } from '../store/cartStore';
 import { USE_MOCK_DATA } from '../constants/config';
 import { useOrdersStore } from '../store/ordersStore';
-import { Order } from '../types';
+import { useUserStore } from '../store/userStore';
+import { Order, OrderStatus } from '../types';
+
+const STATUS_MAP: Record<string, OrderStatus> = {
+  PENDING: 'EN_ATTENTE',
+  CONFIRMED: 'CONFIRMEE',
+  PREPARING: 'EN_PREPARATION',
+  PROCESSING: 'EN_PREPARATION',
+  SHIPPED: 'EXPEDIEE',
+  DELIVERED: 'LIVREE',
+  CANCELLED: 'ANNULEE',
+};
+
+function mapCustomerOrder(item: any): Order {
+  return {
+    id: item.orderNumber || item.id,
+    userId: 'customer',
+    items: (item.items || []).map((line: any) => ({
+      productId: line.productId,
+      productName: line.productName,
+      quantity: line.quantity,
+      price: Number(line.price || 0),
+    })),
+    totalAmount: Number(item.total || 0),
+    status: STATUS_MAP[item.status] || 'EN_ATTENTE',
+    deliveryAddress: [item.deliveryAddress, item.deliveryCity].filter(Boolean).join(', '),
+    phone: item.customerPhone || '',
+    notes: item.customerNotes || undefined,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  };
+}
 
 export const useOrders = () => {
   const getOrders = useOrdersStore((state) => state.getOrders);
+  const authenticated = useUserStore((state) => !!state.user && !!state.token);
 
   return useQuery({
-    queryKey: ['orders'],
+    queryKey: ['orders', authenticated ? 'server' : 'local'],
     queryFn: async () => {
-      // Toujours utiliser les données locales
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (authenticated && !USE_MOCK_DATA) {
+        try {
+          const serverOrders = await fetchCustomerOrders();
+          return serverOrders.map(mapCustomerOrder);
+        } catch (error) {
+          console.warn('Customer order sync unavailable, using local history.', error);
+        }
+      }
       return getOrders();
     },
   });
 };
 
 export const useOrder = (id: string) => {
-  const getOrderById = useOrdersStore((state) => state.getOrderById);
-
+  const { data: orders = [] } = useOrders();
   return useQuery({
-    queryKey: ['order', id],
-    queryFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return getOrderById(id);
-    },
+    queryKey: ['order', id, orders.length],
+    queryFn: async () => orders.find((order) => order.id === id),
+    enabled: !!id,
   });
 };
 
@@ -57,9 +90,7 @@ export const useCreateOrder = () => {
       }));
 
       if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        
-        const newOrder: Order = {
+        return {
           id: `ORDER-${Date.now()}`,
           userId: '1',
           items: items.map((item) => ({
@@ -69,19 +100,15 @@ export const useCreateOrder = () => {
             price: item.product.price,
           })),
           totalAmount: getTotalPrice(),
-          status: 'EN_ATTENTE',
+          status: 'EN_ATTENTE' as OrderStatus,
           deliveryAddress: orderData.deliveryAddress,
           phone: orderData.phone,
           notes: orderData.notes,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        };
-        
-        addOrder(newOrder);
-        return newOrder;
+        } satisfies Order;
       }
 
-      // Appel API
       const apiResponse = await createOrderApi({
         items: orderItems,
         customerName: orderData.customerName || 'Client Mobile',
@@ -92,8 +119,7 @@ export const useCreateOrder = () => {
         notes: orderData.notes,
       });
 
-      // Créer l'objet Order complet pour le store local
-      const newOrder: Order = {
+      return {
         id: apiResponse.orderNumber,
         userId: '1',
         items: items.map((item) => ({
@@ -103,36 +129,18 @@ export const useCreateOrder = () => {
           price: item.product.price,
         })),
         totalAmount: getTotalPrice(),
-        status: 'EN_ATTENTE',
+        status: 'EN_ATTENTE' as OrderStatus,
         deliveryAddress: orderData.deliveryAddress,
         phone: orderData.phone,
         notes: orderData.notes,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
-
-      return newOrder;
+      } satisfies Order;
     },
     onSuccess: (order) => {
       addOrder(order);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       clearCart();
-    },
-  });
-};
-
-export const useCancelOrder = () => {
-  const queryClient = useQueryClient();
-  const cancelOrder = useOrdersStore((state) => state.cancelOrder);
-
-  return useMutation({
-    mutationFn: async (orderId: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      cancelOrder(orderId);
-      return orderId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };
