@@ -1,16 +1,8 @@
 // src/screens/categories/CategoriesScreen.tsx
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-// @ts-expect-error - Expo vector icons types issue
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity } from 'react-native';
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,155 +13,99 @@ import EmptyState from '../../components/common/EmptyState';
 import { useCategories } from '../../hooks/useProducts';
 import { CategoriesStackParamList } from '../../navigation/CategoriesStackNavigator';
 import { Category } from '../../types';
+import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 
-type CategoriesScreenNavigationProp = NativeStackNavigationProp<CategoriesStackParamList>;
+type Nav = NativeStackNavigationProp<CategoriesStackParamList>;
 
 export default function CategoriesScreen() {
-  const navigation = useNavigation<CategoriesScreenNavigationProp>();
+  const navigation = useNavigation<Nav>();
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: categories = [], isLoading } = useCategories();
+  const { data: categories = [], isLoading, refetch } = useCategories();
 
-  const filteredCategories = categories.filter((category: Category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCategories = useMemo(
+    () => categories.filter((category: Category) =>
+      `${category.name} ${category.description || ''}`.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [categories, searchQuery]
   );
-
-  const handleCategoryPress = (category: Category) => {
-    // @ts-ignore
-    navigation.navigate('CategoryProducts', { category });
-  };
 
   return (
     <View style={styles.container}>
-      {/* Header avec gradient */}
-      <LinearGradient
-        colors={[Colors.secondary, Colors.primary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <Text style={styles.headerTitle}>Catégories</Text>
-        <Text style={styles.headerSubtitle}>
-          Explorez nos produits solaires
-        </Text>
-      </LinearGradient>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={Colors.gray} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher une catégorie..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={Colors.textSecondary}
-        />
-        {searchQuery.length > 0 && (
-          <Ionicons
-            name="close-circle"
-            size={20}
-            color={Colors.gray}
-            onPress={() => setSearchQuery('')}
-          />
-        )}
-      </View>
-
-      {/* Categories List */}
-      {isLoading ? (
-        <FlatList
-          data={[1, 2, 3, 4, 5, 6]}
-          keyExtractor={(item) => `skeleton-${item}`}
-          numColumns={2}
-          contentContainerStyle={styles.list}
-          columnWrapperStyle={styles.row}
-          renderItem={() => (
-            <View style={styles.categoryItem}>
-              <CategoryCardSkeleton />
+      <FlatList
+        data={isLoading ? [] : filteredCategories}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        refreshing={false}
+        onRefresh={refetch}
+        ListHeaderComponent={
+          <>
+            <View style={styles.hero}>
+              <Text style={styles.eyebrow}>SOLUTIONS ZIDA</Text>
+              <Text style={styles.title}>Trouvez l’équipement adapté à votre projet</Text>
+              <Text style={styles.subtitle}>Panneaux, batteries, onduleurs, pompage et équipements électriques réunis dans un seul catalogue.</Text>
             </View>
-          )}
-        />
-      ) : filteredCategories.length === 0 ? (
-        <EmptyState
-          icon="grid-outline"
-          title="Aucune catégorie"
-          message={
-            searchQuery
-              ? 'Aucune catégorie ne correspond à votre recherche'
-              : 'Aucune catégorie disponible'
-          }
-        />
-      ) : (
-        <FlatList
-          data={filteredCategories}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.list}
-          columnWrapperStyle={styles.row}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={styles.categoryItem}>
-              <CategoryCard
-                category={item}
-                onPress={() => handleCategoryPress(item)}
+
+            <View style={styles.searchBox}>
+              <Ionicons name="search" size={20} color={Colors.textSecondary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Rechercher une solution..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={Colors.textSecondary}
               />
+              {!!searchQuery && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={20} color={Colors.gray} />
+                </TouchableOpacity>
+              )}
             </View>
-          )}
-        />
-      )}
+
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Catégories</Text>
+                <Text style={styles.sectionSubtitle}>{filteredCategories.length} solution{filteredCategories.length > 1 ? 's' : ''} disponible{filteredCategories.length > 1 ? 's' : ''}</Text>
+              </View>
+            </View>
+
+            {isLoading && (
+              <View style={styles.skeletonGrid}>
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                  <View style={styles.categoryItem} key={item}><CategoryCardSkeleton /></View>
+                ))}
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={!isLoading ? (
+          <EmptyState icon="grid-outline" title="Aucune solution" message={searchQuery ? 'Aucune catégorie ne correspond à votre recherche.' : 'Aucune catégorie disponible pour le moment.'} />
+        ) : null}
+        renderItem={({ item }) => (
+          <View style={styles.categoryItem}>
+            <CategoryCard category={item} onPress={() => navigation.navigate('CategoryProducts', { category: item })} />
+          </View>
+        )}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 20,
-    paddingBottom: 30,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.white,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: Colors.white,
-    opacity: 0.9,
-    marginTop: 4,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    marginHorizontal: 16,
-    marginTop: -20,
-    padding: 12,
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-    color: Colors.text,
-  },
-  list: {
-    padding: 16,
-    paddingTop: 24,
-    paddingBottom: 120,
-  },
-  row: {
-    justifyContent: 'space-between',
-  },
-  categoryItem: {
-    width: '48%',
-    marginBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: '#F6F8FB' },
+  list: { paddingBottom: 120 },
+  hero: { backgroundColor: '#0A365D', paddingHorizontal: Spacing.lg, paddingTop: 28, paddingBottom: 54, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  eyebrow: { color: '#BCD3E5', fontSize: 12, fontWeight: '900', letterSpacing: 0.9 },
+  title: { color: Colors.white, fontSize: Typography.h1, lineHeight: 31, fontWeight: '900', marginTop: 7, maxWidth: '94%' },
+  subtitle: { color: '#E3EDF4', lineHeight: 21, marginTop: 9, maxWidth: '94%' },
+  searchBox: { marginHorizontal: Spacing.lg, marginTop: -26, minHeight: 52, backgroundColor: Colors.white, borderRadius: Radius.lg, paddingHorizontal: Spacing.lg, flexDirection: 'row', alignItems: 'center', ...Shadow.floating },
+  searchInput: { flex: 1, marginLeft: 8, fontSize: 15, color: Colors.text, paddingVertical: 14 },
+  sectionHeader: { paddingHorizontal: Spacing.lg, marginTop: 28, marginBottom: 16 },
+  sectionTitle: { fontSize: Typography.h2, fontWeight: '900', color: Colors.text },
+  sectionSubtitle: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
+  row: { justifyContent: 'space-between', paddingHorizontal: Spacing.lg },
+  skeletonGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: Spacing.lg },
+  categoryItem: { width: '48%', marginBottom: 16 },
 });
