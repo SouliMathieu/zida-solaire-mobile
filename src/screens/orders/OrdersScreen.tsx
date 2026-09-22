@@ -1,17 +1,8 @@
 // src/screens/orders/OrdersScreen.tsx
 
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-// @ts-expect-error - Expo vector icons types issue
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,29 +10,9 @@ import { Colors } from '../../constants/colors';
 import { useOrders } from '../../hooks/useOrders';
 import { OrdersStackParamList } from '../../navigation/OrdersStackNavigator';
 import { Order } from '../../types';
+import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 
-type OrdersScreenNavigationProp = NativeStackNavigationProp<OrdersStackParamList>;
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'EN_ATTENTE':
-      return Colors.warning;
-    case 'CONFIRMEE':
-      return Colors.info;
-    case 'EN_PREPARATION':
-      return Colors.purple;
-    case 'PRETE':
-      return Colors.teal;
-    case 'EN_LIVRAISON':
-      return Colors.primary;
-    case 'LIVREE':
-      return Colors.success;
-    case 'ANNULEE':
-      return Colors.error;
-    default:
-      return Colors.gray;
-  }
-};
+type Nav = NativeStackNavigationProp<OrdersStackParamList>;
 
 const STATUS_LABELS: Record<string, string> = {
   EN_ATTENTE: 'En attente',
@@ -49,59 +20,24 @@ const STATUS_LABELS: Record<string, string> = {
   EN_PREPARATION: 'En préparation',
   PRETE: 'Prête',
   EN_LIVRAISON: 'En livraison',
+  EXPEDIEE: 'Expédiée',
   LIVREE: 'Livrée',
   ANNULEE: 'Annulée',
 };
 
+const statusColor = (status: string) => {
+  if (status === 'LIVREE') return Colors.success;
+  if (status === 'ANNULEE') return Colors.error;
+  if (status === 'EN_ATTENTE') return Colors.warning;
+  return Colors.secondary;
+};
+
+const formatPrice = (price: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(price);
+const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
 export default function OrdersScreen() {
-  const navigation = useNavigation<OrdersScreenNavigationProp>();
-  const { data: orders = [], isLoading, refetch } = useOrders();
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
-  const handleOrderPress = (order: Order) => {
-    navigation.navigate('OrderDetail', { order });
-  };
-
-  if (isLoading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <LinearGradient
-          colors={[Colors.primary, Colors.accent]}
-          style={styles.emptyIconContainer}
-        >
-          <Ionicons name="receipt-outline" size={64} color={Colors.white} />
-        </LinearGradient>
-        <Text style={styles.emptyTitle}>Aucune commande</Text>
-        <Text style={styles.emptyText}>
-          Vous n'avez pas encore passé de commande
-        </Text>
-      </View>
-    );
-  }
+  const navigation = useNavigation<Nav>();
+  const { data: orders = [], refetch } = useOrders();
 
   return (
     <View style={styles.container}>
@@ -110,50 +46,57 @@ export default function OrdersScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={refetch}
-            colors={[Colors.primary]}
-          />
+        refreshing={false}
+        onRefresh={refetch}
+        ListHeaderComponent={
+          <>
+            <View style={styles.hero}>
+              <View style={styles.heroIcon}><Ionicons name="receipt-outline" size={26} color={Colors.primary} /></View>
+              <Text style={styles.eyebrow}>MES COMMANDES</Text>
+              <Text style={styles.title}>Vos achats ZIDA sur cet appareil</Text>
+              <Text style={styles.subtitle}>En attendant la synchronisation complète avec votre compte client, cet écran conserve les commandes passées depuis cette application.</Text>
+            </View>
+
+            <View style={styles.notice}>
+              <Ionicons name="information-circle-outline" size={21} color={Colors.info} />
+              <Text style={styles.noticeText}>Les statuts affichés ici ne sont pas encore synchronisés automatiquement avec le back-office ZIDA.</Text>
+            </View>
+          </>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.orderCard}
-            onPress={() => handleOrderPress(item)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.orderHeader}>
-              <Text style={styles.orderId}>#{item.id}</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: `${getStatusColor(item.status)}20` }
-                ]}
-              >
-                <Text style={[
-                  styles.statusText,
-                  { color: getStatusColor(item.status) }
-                ]}>
-                  {STATUS_LABELS[item.status]}
-                </Text>
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}><Ionicons name="bag-handle-outline" size={38} color={Colors.primary} /></View>
+            <Text style={styles.emptyTitle}>Aucune commande sur cet appareil</Text>
+            <Text style={styles.emptyText}>Les prochaines commandes passées depuis l’application apparaîtront ici automatiquement.</Text>
+          </View>
+        }
+        renderItem={({ item }: { item: Order }) => (
+          <TouchableOpacity style={styles.orderCard} onPress={() => navigation.navigate('OrderDetail', { order: item })} activeOpacity={0.84}>
+            <View style={styles.cardTop}>
+              <View>
+                <Text style={styles.orderNumber}>#{item.id}</Text>
+                <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: `${statusColor(item.status)}18` }]}>
+                <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{STATUS_LABELS[item.status] || item.status}</Text>
               </View>
             </View>
 
-            <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
-
-            <View style={styles.orderInfo}>
-              <Ionicons name="location-outline" size={16} color={Colors.secondary} />
-              <Text style={styles.orderAddress} numberOfLines={1}>
-                {item.deliveryAddress}
-              </Text>
+            <View style={styles.metaRow}>
+              <Ionicons name="location-outline" size={17} color={Colors.secondary} />
+              <Text style={styles.metaText} numberOfLines={1}>{item.deliveryAddress}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Ionicons name="cube-outline" size={17} color={Colors.secondary} />
+              <Text style={styles.metaText}>{item.items.length} article{item.items.length > 1 ? 's' : ''}</Text>
             </View>
 
-            <View style={styles.orderFooter}>
-              <Text style={styles.orderTotal}>
-                {formatPrice(item.totalAmount)}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
+            <View style={styles.cardFooter}>
+              <Text style={styles.total}>{formatPrice(item.totalAmount)}</Text>
+              <View style={styles.detailLink}>
+                <Text style={styles.detailText}>Voir le détail</Text>
+                <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -163,103 +106,29 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginTop: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 120,
-  },
-  orderCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  orderId: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  orderDate: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-  },
-  orderInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  orderAddress: {
-    fontSize: 14,
-    color: Colors.text,
-    marginLeft: 8,
-    flex: 1,
-  },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light,
-  },
-  orderTotal: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.secondary,
-  },
+  container: { flex: 1, backgroundColor: '#F6F8FB' },
+  list: { paddingBottom: 120 },
+  hero: { margin: Spacing.lg, marginBottom: 12, backgroundColor: '#0A365D', borderRadius: Radius.xl, padding: Spacing.xl },
+  heroIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  eyebrow: { color: '#BDD3E4', fontSize: 11, fontWeight: '900', letterSpacing: 0.9 },
+  title: { color: Colors.white, fontSize: Typography.h1, lineHeight: 31, fontWeight: '900', marginTop: 5 },
+  subtitle: { color: '#DFEAF2', lineHeight: 20, marginTop: 8 },
+  notice: { flexDirection: 'row', backgroundColor: '#EEF6FF', borderRadius: Radius.md, marginHorizontal: Spacing.lg, marginBottom: 18, padding: Spacing.lg },
+  noticeText: { flex: 1, marginLeft: 8, color: Colors.text, fontSize: 12, lineHeight: 18 },
+  orderCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, marginHorizontal: Spacing.lg, marginBottom: 14, padding: Spacing.lg, ...Shadow.card },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  orderNumber: { color: Colors.text, fontSize: 16, fontWeight: '900' },
+  orderDate: { color: Colors.textSecondary, fontSize: 11, marginTop: 3 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.pill },
+  statusText: { fontSize: 10, fontWeight: '900' },
+  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  metaText: { flex: 1, marginLeft: 7, color: Colors.textSecondary, fontSize: 12 },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#EDF0F3' },
+  total: { color: Colors.secondary, fontSize: 18, fontWeight: '900' },
+  detailLink: { flexDirection: 'row', alignItems: 'center' },
+  detailText: { color: Colors.primary, fontSize: 11, fontWeight: '900', marginRight: 3 },
+  emptyState: { alignItems: 'center', paddingHorizontal: 34, paddingTop: 40 },
+  emptyIcon: { width: 78, height: 78, borderRadius: 39, backgroundColor: '#FFF3EC', alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { color: Colors.text, fontSize: Typography.h3, fontWeight: '900', marginTop: 16, textAlign: 'center' },
+  emptyText: { color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, marginTop: 7 },
 });
