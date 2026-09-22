@@ -1,40 +1,44 @@
 // src/types/index.ts
 
-// Catégorie de produit
 export interface Category {
   id: string;
   name: string;
   description?: string;
   image?: string;
   slug: string;
-  productCount?: number; // Ajouté pour la compatibilité avec l'API
+  productCount?: number;
 }
 
-// Produit
 export interface Product {
   id: string;
   name: string;
+  slug?: string;
   description: string;
+  shortDescription?: string;
   price: number;
+  compareAtPrice?: number | null;
   categoryId: string;
   category?: Category;
-  image: string; // Changé de images[] à image pour correspondre à l'API
-  images?: string[]; // Gardé pour compatibilité si nécessaire
+  image: string;
+  images?: string[];
   stock: number;
-  features?: string[]; // Ajouté pour correspondre à l'API
-  specifications?: Record<string, string>;
-  isAvailable: boolean; // Ajouté pour correspondre à l'API
-  createdAt?: string; // Rendu optionnel
-  updatedAt?: string; // Rendu optionnel
+  lowStockThreshold?: number;
+  sku?: string;
+  warranty?: string;
+  weight?: number | null;
+  features?: string[];
+  specifications?: Record<string, string | number | boolean>;
+  isAvailable: boolean;
+  isFeatured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// Article du panier
 export interface CartItem {
   product: Product;
   quantity: number;
 }
 
-// Utilisateur
 export interface User {
   id: string;
   name: string;
@@ -43,19 +47,16 @@ export interface User {
   address?: string;
 }
 
-// Statut de commande
-export type OrderStatus = 
+export type OrderStatus =
   | 'EN_ATTENTE'
   | 'CONFIRMEE'
   | 'EN_PREPARATION'
   | 'PRETE'
   | 'EN_LIVRAISON'
-  | 'EXPEDIEE' // Ajouté pour correspondre à l'API
+  | 'EXPEDIEE'
   | 'LIVREE'
   | 'ANNULEE';
 
-// Article de commande
-// Article de commande
 export interface OrderItem {
   productId: string;
   productName: string;
@@ -64,7 +65,6 @@ export interface OrderItem {
   price: number;
 }
 
-// Commande
 export interface Order {
   id: string;
   userId: string;
