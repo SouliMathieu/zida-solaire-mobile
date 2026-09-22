@@ -1,303 +1,171 @@
-// src/screens/profile/ProfileScreen.tsx
-
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-// @ts-expect-error - Expo vector icons types issue
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
 import { useUserStore } from '../../store/userStore';
+import { useCartStore } from '../../store/cartStore';
+import { useOrdersStore } from '../../store/ordersStore';
 import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
+import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 
-type ProfileScreenNavigationProp = NativeStackNavigationProp<ProfileStackParamList>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
 export default function ProfileScreen() {
-  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const navigation = useNavigation<Nav>();
   const { user, isAuthenticated, logout } = useUserStore();
+  const cartCount = useCartStore((state) => state.getTotalItems());
+  const orderCount = useOrdersStore((state) => state.getOrders().length);
 
-  // Si l'utilisateur n'est pas connecté
   if (!isAuthenticated()) {
     return (
-      <View style={styles.notAuthContainer}>
-        <LinearGradient
-          colors={[Colors.primary, Colors.accent]}
-          style={styles.notAuthIconContainer}
-        >
-          <Ionicons name="person-circle-outline" size={80} color={Colors.white} />
-        </LinearGradient>
-        <Text style={styles.notAuthTitle}>Connectez-vous</Text>
-        <Text style={styles.notAuthText}>
-          Créez un compte pour profiter de toutes les fonctionnalités
+      <ScrollView style={styles.container} contentContainerStyle={styles.guestContent}>
+        <View style={styles.guestIcon}>
+          <Ionicons name="person-outline" size={40} color={Colors.primary} />
+        </View>
+        <Text style={styles.guestTitle}>Votre espace ZIDA</Text>
+        <Text style={styles.guestText}>
+          Connectez-vous pour gérer vos informations et préparer le suivi de vos commandes, installations et interventions.
         </Text>
-
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => navigation.navigate('Login')}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={[Colors.primary, Colors.accent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.loginButtonGradient}
-          >
-            <Text style={styles.loginButtonText}>Se connecter</Text>
-          </LinearGradient>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.primaryButtonText}>Se connecter</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.secondaryButtonText}>Créer un compte</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.registerButton}
-          onPress={() => navigation.navigate('Register')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.registerButtonText}>Créer un compte</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.guestActions}>
+          <QuickRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''}`} onPress={() => navigation.navigate('CartArea')} />
+          <QuickRow icon="document-text-outline" title="Demander un devis" subtitle="Recevez une proposition personnalisée" onPress={() => navigation.navigate('Devis')} />
+          <QuickRow icon="headset-outline" title="Assistance / SAV" subtitle="Signaler un problème technique" onPress={() => navigation.navigate('RepairRequest')} />
+        </View>
+      </ScrollView>
     );
   }
 
-  // Menu items avec couleurs variées
-  const menuItems = [
-    {
-      icon: 'person-outline',
-      title: 'Mes informations',
-      subtitle: 'Modifier mes données personnelles',
-      color: Colors.secondary,
-      onPress: () => navigation.navigate('EditProfile'),
-    },
-    {
-      icon: 'document-text-outline',
-      title: 'Demander un devis',
-      subtitle: 'Obtenez un devis gratuit et personnalisé',
-      color: Colors.accent,
-      onPress: () => navigation.navigate('Devis'),
-    },
-    {
-      icon: 'construct-outline',
-      title: "Demande d'installation",
-      subtitle: 'Faites installer votre système solaire',
-      color: Colors.purple,
-      onPress: () => navigation.navigate('InstallationRequest'),
-    },
-    {
-      icon: 'mail-outline',
-      title: 'Nous contacter',
-      subtitle: 'Posez-nous vos questions',
-      color: Colors.teal,
-      onPress: () => navigation.navigate('Contact'),
-    },
-    {
-      icon: 'information-circle-outline',
-      title: 'À propos',
-      subtitle: 'En savoir plus sur ZIDA SOLAIRE',
-      color: Colors.info,
-      onPress: () => navigation.navigate('About'),
-    },
-  ];
-
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Profile Header */}
-      <LinearGradient
-        colors={[Colors.secondary, Colors.primary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person" size={40} color={Colors.white} />
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.headerCard}>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={30} color={Colors.white} />
         </View>
-        <Text style={styles.userName}>{user?.name || 'Utilisateur'}</Text>
-        <Text style={styles.userEmail}>{user?.email || user?.phone || 'Compte utilisateur'}</Text>
-      </LinearGradient>
-
-      {/* Menu Items */}
-      <View style={styles.menuContainer}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}15` }]}>
-              <Ionicons name={item.icon as any} size={24} color={item.color} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>{item.title}</Text>
-              <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
-          </TouchableOpacity>
-        ))}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.userName}>{user?.name || 'Client ZIDA'}</Text>
+          <Text style={styles.userMeta}>{user?.phone || user?.email || 'Compte client'}</Text>
+          {!!user?.city && <Text style={styles.userMeta}>{user.city}</Text>}
+        </View>
+        <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+          <Ionicons name="create-outline" size={20} color={Colors.secondary} />
+        </TouchableOpacity>
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity 
-        style={styles.logoutButton} 
-        onPress={logout}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="log-out-outline" size={24} color={Colors.error} />
+      <Text style={styles.sectionTitle}>Mes activités</Text>
+      <View style={styles.statsRow}>
+        <StatCard icon="cart-outline" value={String(cartCount)} label="Panier" onPress={() => navigation.navigate('CartArea')} />
+        <StatCard icon="receipt-outline" value={String(orderCount)} label="Commandes" onPress={() => navigation.navigate('OrdersArea')} />
+        <StatCard icon="construct-outline" value="—" label="Installations" onPress={() => navigation.navigate('InstallationRequest')} />
+      </View>
+
+      <Text style={styles.sectionTitle}>Services</Text>
+      <View style={styles.cardGroup}>
+        <MenuRow icon="receipt-outline" title="Mes commandes" subtitle="Commandes passées depuis cette application" onPress={() => navigation.navigate('OrdersArea')} />
+        <MenuRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''} en attente`} onPress={() => navigation.navigate('CartArea')} />
+        <MenuRow icon="document-text-outline" title="Demander un devis" subtitle="Obtenir une proposition personnalisée" onPress={() => navigation.navigate('Devis')} />
+        <MenuRow icon="construct-outline" title="Demande d'installation" subtitle="Planifier un nouveau projet" onPress={() => navigation.navigate('InstallationRequest')} />
+        <MenuRow icon="headset-outline" title="Assistance / SAV" subtitle="Créer une demande de dépannage" onPress={() => navigation.navigate('RepairRequest')} last />
+      </View>
+
+      <Text style={styles.sectionTitle}>Mon compte</Text>
+      <View style={styles.cardGroup}>
+        <MenuRow icon="person-outline" title="Mes informations" subtitle="Modifier mes coordonnées" onPress={() => navigation.navigate('EditProfile')} />
+        <MenuRow icon="mail-outline" title="Nous contacter" subtitle="Questions commerciales ou techniques" onPress={() => navigation.navigate('Contact')} />
+        <MenuRow icon="information-circle-outline" title="À propos de ZIDA" subtitle="Entreprise, services et informations" onPress={() => navigation.navigate('About')} last />
+      </View>
+
+      <View style={styles.noticeCard}>
+        <Ionicons name="information-circle-outline" size={22} color={Colors.info} />
+        <Text style={styles.noticeText}>
+          Le suivi serveur complet des commandes et installations sera activé dès l'ajout des endpoints client sécurisés au backend partagé.
+        </Text>
+      </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <Ionicons name="log-out-outline" size={20} color={Colors.error} />
         <Text style={styles.logoutText}>Se déconnecter</Text>
       </TouchableOpacity>
-
-      <View style={styles.bottomSpacing} />
     </ScrollView>
   );
 }
 
+function StatCard({ icon, value, label, onPress }: { icon: string; value: string; label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.statCard} onPress={onPress} activeOpacity={0.82}>
+      <Ionicons name={icon as any} size={22} color={Colors.primary} />
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function MenuRow({ icon, title, subtitle, onPress, last }: { icon: string; title: string; subtitle: string; onPress: () => void; last?: boolean }) {
+  return (
+    <TouchableOpacity style={[styles.menuRow, last && styles.menuRowLast]} onPress={onPress} activeOpacity={0.78}>
+      <View style={styles.menuIcon}><Ionicons name={icon as any} size={22} color={Colors.secondary} /></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.menuTitle}>{title}</Text>
+        <Text style={styles.menuSubtitle}>{subtitle}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={19} color={Colors.gray} />
+    </TouchableOpacity>
+  );
+}
+
+function QuickRow({ icon, title, subtitle, onPress }: { icon: string; title: string; subtitle: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.quickRow} onPress={onPress}>
+      <View style={styles.menuIcon}><Ionicons name={icon as any} size={22} color={Colors.secondary} /></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.menuTitle}>{title}</Text>
+        <Text style={styles.menuSubtitle}>{subtitle}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={19} color={Colors.gray} />
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  notAuthContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-    backgroundColor: Colors.background,
-  },
-  notAuthIconContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  notAuthTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginTop: 16,
-  },
-  notAuthText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  loginButton: {
-    width: '100%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  loginButtonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  registerButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    width: '100%',
-    alignItems: 'center',
-  },
-  registerButtonText: {
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  header: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.white,
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: Colors.white,
-    opacity: 0.9,
-  },
-  menuContainer: {
-    backgroundColor: Colors.white,
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light,
-  },
-  menuIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  menuSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.white,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.error,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.error,
-    marginLeft: 8,
-  },
-  bottomSpacing: {
-    height: 140,
-  },
+  container: { flex: 1, backgroundColor: '#F6F8FB' },
+  content: { padding: Spacing.lg, paddingBottom: 120 },
+  guestContent: { padding: Spacing.xl, paddingTop: 70, paddingBottom: 120 },
+  guestIcon: { width: 78, height: 78, borderRadius: 39, backgroundColor: '#FFF3EC', alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
+  guestTitle: { marginTop: 20, textAlign: 'center', fontSize: Typography.h1, fontWeight: '900', color: Colors.text },
+  guestText: { marginTop: 9, textAlign: 'center', color: Colors.textSecondary, lineHeight: 21 },
+  primaryButton: { height: 52, borderRadius: Radius.md, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 26 },
+  primaryButtonText: { color: Colors.white, fontWeight: '900' },
+  secondaryButton: { height: 52, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.secondary, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  secondaryButtonText: { color: Colors.secondary, fontWeight: '900' },
+  guestActions: { marginTop: 28, backgroundColor: Colors.white, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
+  quickRow: { minHeight: 70, flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, borderBottomWidth: 1, borderBottomColor: '#EEF1F4' },
+  headerCard: { backgroundColor: '#0A365D', borderRadius: Radius.xl, padding: Spacing.xl, flexDirection: 'row', alignItems: 'center', ...Shadow.card },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  userName: { color: Colors.white, fontSize: 20, fontWeight: '900' },
+  userMeta: { color: '#DCE7F0', marginTop: 3, fontSize: 13 },
+  editButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  sectionTitle: { fontSize: Typography.h2, fontWeight: '900', color: Colors.text, marginTop: 28, marginBottom: 12 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  statCard: { width: '31.5%', backgroundColor: Colors.white, borderRadius: Radius.lg, paddingVertical: 16, alignItems: 'center', ...Shadow.card },
+  statValue: { color: Colors.text, fontSize: 20, fontWeight: '900', marginTop: 7 },
+  statLabel: { color: Colors.textSecondary, fontSize: 11, marginTop: 2, textAlign: 'center' },
+  cardGroup: { backgroundColor: Colors.white, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
+  menuRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, borderBottomWidth: 1, borderBottomColor: '#EEF1F4' },
+  menuRowLast: { borderBottomWidth: 0 },
+  menuIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#EDF4FA', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  menuTitle: { color: Colors.text, fontWeight: '800', fontSize: 14 },
+  menuSubtitle: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
+  noticeCard: { flexDirection: 'row', backgroundColor: '#EEF6FF', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 18 },
+  noticeText: { flex: 1, color: Colors.text, fontSize: 12, lineHeight: 18, marginLeft: 10 },
+  logoutButton: { height: 52, borderRadius: Radius.md, borderWidth: 1, borderColor: '#F0C5C5', backgroundColor: '#FFF8F8', marginTop: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  logoutText: { color: Colors.error, fontWeight: '900', marginLeft: 8 },
 });
