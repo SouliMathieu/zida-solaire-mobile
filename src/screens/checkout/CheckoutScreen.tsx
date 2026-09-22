@@ -56,13 +56,21 @@ export default function CheckoutScreen() {
     return true;
   };
 
+  const goToOrders = () => {
+    // CartStack -> ProfileStack -> BottomTabs
+    const profileStack = navigation.getParent();
+    const tabs = profileStack?.getParent();
+    // @ts-ignore nested navigator route
+    tabs?.navigate('Compte', { screen: 'OrdersArea' });
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
       await createOrder.mutateAsync({
         deliveryAddress: address,
-        phone: phone,
+        phone,
         customerName: name,
         customerEmail: email || undefined,
         notes: notes || undefined,
@@ -71,15 +79,7 @@ export default function CheckoutScreen() {
       Alert.alert(
         'Commande confirmée !',
         'Votre commande a été enregistrée avec succès. Nous vous contacterons bientôt.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // @ts-ignore
-              navigation.navigate('Commandes');
-            },
-          },
-        ]
+        [{ text: 'Voir ma commande', onPress: goToOrders }]
       );
     } catch (error) {
       Alert.alert(
@@ -99,35 +99,25 @@ export default function CheckoutScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Résumé de la commande */}
         <View style={[styles.section, styles.sectionAccent]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="cart" size={24} color={Colors.accent} />
             <Text style={styles.sectionTitle}>Résumé de la commande</Text>
           </View>
-          
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Articles</Text>
               <Text style={styles.summaryValue}>{items.length}</Text>
             </View>
-            
             <View style={styles.divider} />
-            
             {items.map((item) => (
               <View key={item.product.id} style={styles.itemRow}>
-                <Text style={styles.itemName} numberOfLines={1}>
-                  {item.product.name}
-                </Text>
+                <Text style={styles.itemName} numberOfLines={1}>{item.product.name}</Text>
                 <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-                <Text style={styles.itemPrice}>
-                  {formatPrice(item.product.price * item.quantity)}
-                </Text>
+                <Text style={styles.itemPrice}>{formatPrice(item.product.price * item.quantity)}</Text>
               </View>
             ))}
-            
             <View style={styles.divider} />
-            
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
@@ -135,331 +125,106 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {/* Informations de livraison */}
         <View style={[styles.section, styles.sectionSecondary]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="person" size={24} color={Colors.secondary} />
             <Text style={styles.sectionTitle}>Informations de livraison</Text>
           </View>
-          
           <View style={styles.formCard}>
-            {/* Nom complet */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Nom complet *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="person-outline" size={20} color={Colors.gray} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex: Jean Dupont"
-                  value={name}
-                  onChangeText={setName}
-                  placeholderTextColor={Colors.textSecondary}
-                />
+                <TextInput style={styles.input} placeholder="Ex: Jean Dupont" value={name} onChangeText={setName} placeholderTextColor={Colors.textSecondary} />
               </View>
             </View>
-
-            {/* Email */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="mail-outline" size={20} color={Colors.gray} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex: jean@example.com"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor={Colors.textSecondary}
-                />
+                <TextInput style={styles.input} placeholder="Ex: jean@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={Colors.textSecondary} />
               </View>
             </View>
-
-            {/* Téléphone */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Numéro de téléphone *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="call-outline" size={20} color={Colors.gray} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex: +226 70 00 00 00"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  placeholderTextColor={Colors.textSecondary}
-                />
+                <TextInput style={styles.input} placeholder="Ex: +226 70 00 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor={Colors.textSecondary} />
               </View>
             </View>
-
-            {/* Adresse */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Adresse de livraison *</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                <Ionicons
-                  name="location-outline"
-                  size={20}
-                  color={Colors.gray}
-                  style={styles.textAreaIcon}
-                />
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Ex: Ouagadougou, Secteur 15, Avenue..."
-                  value={address}
-                  onChangeText={setAddress}
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                  placeholderTextColor={Colors.textSecondary}
-                />
+                <Ionicons name="location-outline" size={20} color={Colors.gray} style={styles.textAreaIcon} />
+                <TextInput style={[styles.input, styles.textArea]} placeholder="Ex: Ouagadougou, Secteur 15, Avenue..." value={address} onChangeText={setAddress} multiline numberOfLines={3} textAlignVertical="top" placeholderTextColor={Colors.textSecondary} />
               </View>
             </View>
-
-            {/* Notes */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Notes (optionnel)</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                <Ionicons
-                  name="create-outline"
-                  size={20}
-                  color={Colors.gray}
-                  style={styles.textAreaIcon}
-                />
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Instructions de livraison..."
-                  value={notes}
-                  onChangeText={setNotes}
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                  placeholderTextColor={Colors.textSecondary}
-                />
+                <Ionicons name="create-outline" size={20} color={Colors.gray} style={styles.textAreaIcon} />
+                <TextInput style={[styles.input, styles.textArea]} placeholder="Informations utiles pour la livraison..." value={notes} onChangeText={setNotes} multiline numberOfLines={3} textAlignVertical="top" placeholderTextColor={Colors.textSecondary} />
               </View>
             </View>
           </View>
         </View>
 
-        {/* Mode de paiement */}
-        <View style={[styles.section, styles.sectionPurple]}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="wallet" size={24} color={Colors.purple} />
-            <Text style={styles.sectionTitle}>Mode de paiement</Text>
-          </View>
-          
-          <View style={styles.paymentCard}>
-            <View style={styles.paymentOption}>
-              <Ionicons name="cash-outline" size={32} color={Colors.success} />
-              <View style={styles.paymentInfo}>
-                <Text style={styles.paymentTitle}>Paiement à la livraison</Text>
-                <Text style={styles.paymentDescription}>
-                  Payez en espèces ou par Mobile Money lors de la réception
-                </Text>
-              </View>
-            </View>
+        <View style={styles.paymentInfo}>
+          <Ionicons name="cash-outline" size={22} color={Colors.success} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.paymentTitle}>Paiement à la livraison</Text>
+            <Text style={styles.paymentText}>Les moyens Mobile Money seront proposés dès leur activation côté backend.</Text>
           </View>
         </View>
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
 
-      {/* Footer */}
       <View style={styles.footer}>
-        <GradientButton
-          title={createOrder.isPending ? 'Confirmation...' : 'Confirmer la commande'}
-          onPress={handleSubmit}
-          loading={createOrder.isPending}
-          colors={[Colors.success, Colors.teal]}
-        />
+        <View style={styles.footerTotal}>
+          <Text style={styles.footerLabel}>Total</Text>
+          <Text style={styles.footerPrice}>{formatPrice(totalPrice)}</Text>
+        </View>
+        <GradientButton title={createOrder.isPending ? 'Enregistrement...' : 'Confirmer la commande'} onPress={handleSubmit} disabled={createOrder.isPending || items.length === 0} />
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  section: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-    borderLeftWidth: 4,
-  },
-  sectionAccent: {
-    borderLeftColor: Colors.accent,
-  },
-  sectionSecondary: {
-    borderLeftColor: Colors.secondary,
-  },
-  sectionPurple: {
-    borderLeftColor: Colors.purple,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginLeft: 12,
-  },
-  summaryCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.light,
-    marginVertical: 12,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  itemName: {
-    flex: 1,
-    fontSize: 14,
-    color: Colors.text,
-  },
-  itemQuantity: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginHorizontal: 8,
-  },
-  itemPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  totalPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.secondary,
-  },
-  formCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: Colors.light,
-  },
-  textAreaContainer: {
-    alignItems: 'flex-start',
-    paddingTop: 12,
-  },
-  textAreaIcon: {
-    marginTop: 2,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: Colors.text,
-    paddingVertical: 12,
-    paddingLeft: 8,
-  },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 0,
-  },
-  paymentCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  paymentOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  paymentInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  paymentTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  paymentDescription: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  bottomSpacing: {
-    height: 140,
-  },
-  footer: {
-    backgroundColor: Colors.white,
-    padding: 16,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scrollView: { flex: 1 },
+  section: { padding: 16 },
+  sectionAccent: { backgroundColor: `${Colors.accent}08` },
+  sectionSecondary: { backgroundColor: `${Colors.secondary}05` },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.text },
+  summaryCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 16 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  summaryLabel: { color: Colors.textSecondary },
+  summaryValue: { fontWeight: '700', color: Colors.text },
+  divider: { height: 1, backgroundColor: Colors.light, marginVertical: 14 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  itemName: { flex: 1, color: Colors.text },
+  itemQuantity: { width: 40, textAlign: 'center', color: Colors.textSecondary },
+  itemPrice: { minWidth: 100, textAlign: 'right', fontWeight: '600', color: Colors.text },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  totalLabel: { fontSize: 17, fontWeight: '700', color: Colors.text },
+  totalPrice: { fontSize: 20, fontWeight: '900', color: Colors.primary },
+  formCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 16 },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 8 },
+  inputContainer: { minHeight: 52, borderWidth: 1, borderColor: Colors.light, borderRadius: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white },
+  input: { flex: 1, marginLeft: 10, color: Colors.text, paddingVertical: 12 },
+  textAreaContainer: { alignItems: 'flex-start' },
+  textAreaIcon: { marginTop: 14 },
+  textArea: { minHeight: 90 },
+  paymentInfo: { margin: 16, marginTop: 4, padding: 16, backgroundColor: '#EDF9F2', borderRadius: 14, flexDirection: 'row', gap: 12 },
+  paymentTitle: { color: Colors.text, fontWeight: '800' },
+  paymentText: { color: Colors.textSecondary, marginTop: 3, lineHeight: 18, fontSize: 12 },
+  footer: { backgroundColor: Colors.white, borderTopWidth: 1, borderTopColor: Colors.light, padding: 16, paddingBottom: Platform.OS === 'ios' ? 28 : 16 },
+  footerTotal: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  footerLabel: { fontSize: 15, color: Colors.textSecondary },
+  footerPrice: { fontSize: 18, fontWeight: '900', color: Colors.primary },
+  bottomSpacing: { height: 30 },
 });
