@@ -31,22 +31,43 @@ export interface InstallationFormData {
   notes?: string;
 }
 
+const splitName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || 'Client',
+    lastName: parts.slice(1).join(' ') || 'ZIDA',
+  };
+};
+
 export const formsService = {
-  // Contact
   submitContact: async (data: ContactFormData) => {
     const response = await api.post('/contact', data);
     return response.data;
   },
 
-  // Devis
   submitDevis: async (data: DevisFormData) => {
     const response = await api.post('/devis', data);
     return response.data;
   },
 
-  // Installation
   submitInstallation: async (data: InstallationFormData) => {
-    const response = await api.post('/installation-requests', data);
+    const { firstName, lastName } = splitName(data.name);
+    const description = [
+      `Type de propriété: ${data.propertyType}`,
+      data.roofType ? `Type de toiture: ${data.roofType}` : null,
+      data.averageMonthlyBill ? `Facture mensuelle moyenne: ${data.averageMonthlyBill}` : null,
+      data.notes ? `Notes: ${data.notes}` : null,
+    ].filter(Boolean).join('\n');
+
+    const response = await api.post('/installation-requests', {
+      firstName,
+      lastName,
+      phone: data.phone,
+      email: data.email || undefined,
+      type: 'SOLAR',
+      address: data.address,
+      description: description || 'Demande d’installation solaire depuis l’application mobile.',
+    });
     return response.data;
   },
 };
