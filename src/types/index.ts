@@ -19,7 +19,7 @@ export interface Product {
   compareAtPrice?: number | null;
   categoryId: string;
   category?: Category;
-  image: string;
+  image?: string;
   images?: string[];
   stock: number;
   lowStockThreshold?: number;
@@ -28,7 +28,7 @@ export interface Product {
   weight?: number | null;
   features?: string[];
   specifications?: Record<string, string | number | boolean>;
-  isAvailable: boolean;
+  isAvailable?: boolean;
   isFeatured?: boolean;
   createdAt?: string;
   updatedAt?: string;
