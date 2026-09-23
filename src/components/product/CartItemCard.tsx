@@ -40,11 +40,12 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   };
 
   const totalPrice = item.product.price * item.quantity;
+  const productImage = item.product.images?.[0] || item.product.image || 'https://via.placeholder.com/100';
 
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: item.product.images[0] || 'https://via.placeholder.com/100' }}
+        source={{ uri: productImage }}
         style={styles.image}
         contentFit="cover"
       />
