@@ -14,6 +14,7 @@ type Nav = NativeStackNavigationProp<EnergyStackParamList, 'EnergyHome'>;
 export default function EnergyHomeScreen() {
   const navigation = useNavigation<Nav>();
   const { isAuthenticated } = useUserStore();
+  const authenticated = isAuthenticated();
 
   const goToAccount = () => {
     // @ts-ignore nested tab navigation
@@ -27,9 +28,9 @@ export default function EnergyHomeScreen() {
           <Ionicons name="sunny" size={30} color={Colors.primary} />
         </View>
         <Text style={styles.eyebrow}>MON ÉNERGIE</Text>
-        <Text style={styles.title}>Comprenez vos besoins avant d'investir</Text>
+        <Text style={styles.title}>Comprenez vos besoins et suivez vos projets</Text>
         <Text style={styles.subtitle}>
-          Estimez votre système, préparez votre étude technique et retrouvez bientôt ici tout le suivi de votre installation ZIDA.
+          Estimez votre système solaire, transmettez votre étude à ZIDA et suivez l'avancement de vos installations depuis un seul espace.
         </Text>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('SolarAssistant')} activeOpacity={0.86}>
           <Text style={styles.primaryText}>Estimer mes besoins</Text>
@@ -40,34 +41,34 @@ export default function EnergyHomeScreen() {
       <Text style={styles.sectionTitle}>Vos outils énergie</Text>
       <View style={styles.grid}>
         <ActionCard icon="calculator-outline" title="Assistant solaire" text="Dimensionnez une première solution selon vos usages." onPress={() => navigation.navigate('SolarAssistant')} />
-        <ActionCard icon="document-text-outline" title="Étude technique" text="Transformez votre estimation en demande auprès de ZIDA." onPress={() => navigation.navigate('SolarAssistant')} />
+        <ActionCard icon="home-outline" title="Mes installations" text="Suivez vos demandes, rendez-vous et travaux ZIDA." onPress={() => authenticated ? navigation.navigate('Installations') : goToAccount()} />
       </View>
 
-      <View style={styles.projectCard}>
+      <TouchableOpacity
+        style={styles.projectCard}
+        onPress={() => authenticated ? navigation.navigate('Installations') : goToAccount()}
+        activeOpacity={0.84}
+      >
         <View style={styles.projectHeader}>
           <View style={styles.projectIcon}>
-            <Ionicons name="home-outline" size={24} color={Colors.secondary} />
+            <Ionicons name="pulse-outline" size={24} color={Colors.secondary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.projectTitle}>Mes installations</Text>
+            <Text style={styles.projectTitle}>{authenticated ? 'Suivre mes projets ZIDA' : 'Retrouver mes projets'}</Text>
             <Text style={styles.projectText}>
-              {isAuthenticated()
-                ? 'Le suivi de vos projets, garanties et équipements sera regroupé ici.'
-                : 'Connectez-vous pour retrouver vos projets, garanties et interventions.'}
+              {authenticated
+                ? 'Consultez l’étape actuelle, les rendez-vous, le devis et les informations communiquées par l’équipe ZIDA.'
+                : 'Connectez-vous pour retrouver vos demandes et installations associées à votre numéro de téléphone.'}
             </Text>
           </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
         </View>
-        {!isAuthenticated() && (
-          <TouchableOpacity style={styles.secondaryButton} onPress={goToAccount}>
-            <Text style={styles.secondaryText}>Accéder à mon compte</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.tipCard}>
         <Ionicons name="shield-checkmark-outline" size={25} color={Colors.success} />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.tipTitle}>Une estimation, pas un devis définitif</Text>
+          <Text style={styles.tipTitle}>Une estimation reste indicative</Text>
           <Text style={styles.tipText}>Le dimensionnement final dépend d'une étude du site, de vos usages réels et du matériel disponible chez ZIDA.</Text>
         </View>
       </View>
@@ -107,8 +108,6 @@ const styles = StyleSheet.create({
   projectIcon: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#EDF4FA', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   projectTitle: { fontSize: Typography.h3, fontWeight: '900', color: Colors.text },
   projectText: { color: Colors.textSecondary, lineHeight: 19, marginTop: 5 },
-  secondaryButton: { height: 48, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.secondary, alignItems: 'center', justifyContent: 'center', marginTop: 16 },
-  secondaryText: { color: Colors.secondary, fontWeight: '800' },
   tipCard: { flexDirection: 'row', backgroundColor: '#EDF9F2', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 18 },
   tipTitle: { color: Colors.text, fontWeight: '900' },
   tipText: { color: Colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 4 },
