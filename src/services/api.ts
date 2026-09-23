@@ -160,6 +160,20 @@ export const verifyCustomerRegisterOtp = async (
   return response.data;
 };
 
+export const requestCustomerPhoneChange = async (phone: string): Promise<OtpChallengeResponse> => {
+  const response = await api.post('/customer/phone-change/request', { phone });
+  return response.data;
+};
+
+export const verifyCustomerPhoneChange = async (data: {
+  challengeId: string;
+  phone: string;
+  code: string;
+}) => {
+  const response = await api.post('/customer/phone-change/verify', data);
+  return response.data;
+};
+
 export const getCustomerProfile = async () => {
   const response = await api.get('/customer/profile');
   return response.data;
