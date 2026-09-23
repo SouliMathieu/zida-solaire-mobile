@@ -8,6 +8,7 @@ import { Colors } from '../../constants/colors';
 import { useUserStore } from '../../store/userStore';
 import { useCartStore } from '../../store/cartStore';
 import { useOrdersStore } from '../../store/ordersStore';
+import { useNotifications } from '../../hooks/useNotifications';
 import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 
@@ -18,23 +19,17 @@ export default function ProfileScreen() {
   const { user, isAuthenticated, logout } = useUserStore();
   const cartCount = useCartStore((state) => state.getTotalItems());
   const orderCount = useOrdersStore((state) => state.getOrders().length);
+  const notifications = useNotifications();
+  const unreadCount = notifications.data?.unreadCount || 0;
 
   if (!isAuthenticated()) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.guestContent}>
-        <View style={styles.guestIcon}>
-          <Ionicons name="person-outline" size={40} color={Colors.primary} />
-        </View>
+        <View style={styles.guestIcon}><Ionicons name="person-outline" size={40} color={Colors.primary} /></View>
         <Text style={styles.guestTitle}>Votre espace ZIDA</Text>
-        <Text style={styles.guestText}>
-          Connectez-vous pour gérer vos informations et préparer le suivi de vos commandes, installations et interventions.
-        </Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.primaryButtonText}>Se connecter</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.secondaryButtonText}>Créer un compte</Text>
-        </TouchableOpacity>
+        <Text style={styles.guestText}>Connectez-vous pour gérer vos informations et suivre vos commandes, installations et interventions.</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}><Text style={styles.primaryButtonText}>Se connecter</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Register')}><Text style={styles.secondaryButtonText}>Créer un compte</Text></TouchableOpacity>
 
         <View style={styles.guestActions}>
           <QuickRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''}`} onPress={() => navigation.navigate('CartArea')} />
@@ -48,29 +43,26 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerCard}>
-        <View style={styles.avatar}>
-          <Ionicons name="person" size={30} color={Colors.white} />
-        </View>
+        <View style={styles.avatar}><Ionicons name="person" size={30} color={Colors.white} /></View>
         <View style={{ flex: 1 }}>
           <Text style={styles.userName}>{user?.name || 'Client ZIDA'}</Text>
           <Text style={styles.userMeta}>{user?.phone || user?.email || 'Compte client'}</Text>
           {!!user?.city && <Text style={styles.userMeta}>{user.city}</Text>}
         </View>
-        <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
-          <Ionicons name="create-outline" size={20} color={Colors.secondary} />
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}><Ionicons name="create-outline" size={20} color={Colors.secondary} /></TouchableOpacity>
       </View>
 
       <Text style={styles.sectionTitle}>Mes activités</Text>
       <View style={styles.statsRow}>
         <StatCard icon="cart-outline" value={String(cartCount)} label="Panier" onPress={() => navigation.navigate('CartArea')} />
         <StatCard icon="receipt-outline" value={String(orderCount)} label="Commandes" onPress={() => navigation.navigate('OrdersArea')} />
-        <StatCard icon="construct-outline" value="—" label="Installations" onPress={() => navigation.navigate('InstallationRequest')} />
+        <StatCard icon="notifications-outline" value={String(unreadCount)} label="À lire" onPress={() => navigation.navigate('Notifications')} />
       </View>
 
       <Text style={styles.sectionTitle}>Services</Text>
       <View style={styles.cardGroup}>
-        <MenuRow icon="receipt-outline" title="Mes commandes" subtitle="Commandes passées depuis cette application" onPress={() => navigation.navigate('OrdersArea')} />
+        <MenuRow icon="notifications-outline" title="Activité & notifications" subtitle={unreadCount > 0 ? `${unreadCount} mise${unreadCount > 1 ? 's' : ''} à jour non lue${unreadCount > 1 ? 's' : ''}` : 'Tout est à jour'} badge={unreadCount} onPress={() => navigation.navigate('Notifications')} />
+        <MenuRow icon="receipt-outline" title="Mes commandes" subtitle="Suivre mes commandes" onPress={() => navigation.navigate('OrdersArea')} />
         <MenuRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''} en attente`} onPress={() => navigation.navigate('CartArea')} />
         <MenuRow icon="document-text-outline" title="Demander un devis" subtitle="Obtenir une proposition personnalisée" onPress={() => navigation.navigate('Devis')} />
         <MenuRow icon="construct-outline" title="Demande d'installation" subtitle="Planifier un nouveau projet" onPress={() => navigation.navigate('InstallationRequest')} />
@@ -84,13 +76,6 @@ export default function ProfileScreen() {
         <MenuRow icon="information-circle-outline" title="À propos de ZIDA" subtitle="Entreprise, services et informations" onPress={() => navigation.navigate('About')} last />
       </View>
 
-      <View style={styles.noticeCard}>
-        <Ionicons name="information-circle-outline" size={22} color={Colors.info} />
-        <Text style={styles.noticeText}>
-          Le suivi serveur complet des commandes et installations sera activé dès l'ajout des endpoints client sécurisés au backend partagé.
-        </Text>
-      </View>
-
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Ionicons name="log-out-outline" size={20} color={Colors.error} />
         <Text style={styles.logoutText}>Se déconnecter</Text>
@@ -100,39 +85,22 @@ export default function ProfileScreen() {
 }
 
 function StatCard({ icon, value, label, onPress }: { icon: string; value: string; label: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.statCard} onPress={onPress} activeOpacity={0.82}>
-      <Ionicons name={icon as any} size={22} color={Colors.primary} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
+  return <TouchableOpacity style={styles.statCard} onPress={onPress} activeOpacity={0.82}><Ionicons name={icon as any} size={22} color={Colors.primary} /><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></TouchableOpacity>;
 }
 
-function MenuRow({ icon, title, subtitle, onPress, last }: { icon: string; title: string; subtitle: string; onPress: () => void; last?: boolean }) {
+function MenuRow({ icon, title, subtitle, onPress, last, badge = 0 }: { icon: string; title: string; subtitle: string; onPress: () => void; last?: boolean; badge?: number }) {
   return (
     <TouchableOpacity style={[styles.menuRow, last && styles.menuRowLast]} onPress={onPress} activeOpacity={0.78}>
       <View style={styles.menuIcon}><Ionicons name={icon as any} size={22} color={Colors.secondary} /></View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.menuTitle}>{title}</Text>
-        <Text style={styles.menuSubtitle}>{subtitle}</Text>
-      </View>
+      <View style={{ flex: 1 }}><Text style={styles.menuTitle}>{title}</Text><Text style={styles.menuSubtitle}>{subtitle}</Text></View>
+      {badge > 0 && <View style={styles.menuBadge}><Text style={styles.menuBadgeText}>{badge > 99 ? '99+' : badge}</Text></View>}
       <Ionicons name="chevron-forward" size={19} color={Colors.gray} />
     </TouchableOpacity>
   );
 }
 
 function QuickRow({ icon, title, subtitle, onPress }: { icon: string; title: string; subtitle: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.quickRow} onPress={onPress}>
-      <View style={styles.menuIcon}><Ionicons name={icon as any} size={22} color={Colors.secondary} /></View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.menuTitle}>{title}</Text>
-        <Text style={styles.menuSubtitle}>{subtitle}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={19} color={Colors.gray} />
-    </TouchableOpacity>
-  );
+  return <TouchableOpacity style={styles.quickRow} onPress={onPress}><View style={styles.menuIcon}><Ionicons name={icon as any} size={22} color={Colors.secondary} /></View><View style={{ flex: 1 }}><Text style={styles.menuTitle}>{title}</Text><Text style={styles.menuSubtitle}>{subtitle}</Text></View><Ionicons name="chevron-forward" size={19} color={Colors.gray} /></TouchableOpacity>;
 }
 
 const styles = StyleSheet.create({
@@ -164,8 +132,8 @@ const styles = StyleSheet.create({
   menuIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#EDF4FA', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   menuTitle: { color: Colors.text, fontWeight: '800', fontSize: 14 },
   menuSubtitle: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
-  noticeCard: { flexDirection: 'row', backgroundColor: '#EEF6FF', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 18 },
-  noticeText: { flex: 1, color: Colors.text, fontSize: 12, lineHeight: 18, marginLeft: 10 },
+  menuBadge: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: Colors.primary, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center', marginRight: 6 },
+  menuBadgeText: { color: Colors.white, fontSize: 10, fontWeight: '900' },
   logoutButton: { height: 52, borderRadius: Radius.md, borderWidth: 1, borderColor: '#F0C5C5', backgroundColor: '#FFF8F8', marginTop: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   logoutText: { color: Colors.error, fontWeight: '900', marginLeft: 8 },
 });
