@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { SupportStackParamList } from '../../navigation/SupportStackNavigator';
+import { useUserStore } from '../../store/userStore';
 
 type Nav = NativeStackNavigationProp<SupportStackParamList, 'SupportHome'>;
 
@@ -15,6 +16,7 @@ const whatsapp = '22674339977';
 
 export default function SupportHomeScreen() {
   const navigation = useNavigation<Nav>();
+  const authenticated = useUserStore((state) => state.isAuthenticated());
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -31,6 +33,12 @@ export default function SupportHomeScreen() {
         title="Signaler un problème"
         text="Onduleur, batterie, panneaux, pompe ou installation électrique."
         onPress={() => navigation.navigate('RepairRequest')}
+      />
+      <SupportCard
+        icon="receipt-outline"
+        title="Mes tickets SAV"
+        text={authenticated ? 'Consultez les demandes liées à votre compte et leur statut.' : 'Connectez-vous pour suivre vos demandes SAV.'}
+        onPress={() => navigation.navigate('RepairTickets')}
       />
       <SupportCard
         icon="construct-outline"
