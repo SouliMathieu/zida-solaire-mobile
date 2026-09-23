@@ -1,5 +1,3 @@
-// src/screens/profile/RegisterScreen.tsx
-
 import React, { useState } from 'react';
 import {
   View,
@@ -12,17 +10,21 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-// @ts-expect-error - Expo vector icons types issue
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
-import Button from '../../components/common/Button';
-import { useRegister } from '../../hooks/useAuth';
+import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
+import { useRequestRegisterOtp, useVerifyRegisterOtp } from '../../hooks/useAuth';
 
 export default function RegisterScreen() {
   const navigation = useNavigation();
-  const registerMutation = useRegister();
+  const requestOtp = useRequestRegisterOtp();
+  const verifyOtp = useVerifyRegisterOtp();
 
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [devCode, setDevCode] = useState<string | undefined>();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -36,256 +38,184 @@ export default function RegisterScreen() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleRegister = async () => {
+  const registrationPayload = () => ({
+    firstName: formData.firstName.trim(),
+    lastName: formData.lastName.trim(),
+    phone: formData.phone.trim(),
+    email: formData.email.trim() || undefined,
+    address: formData.address.trim() || undefined,
+    city: formData.city.trim() || 'Ouagadougou',
+  });
+
+  const requestCode = async () => {
     if (!formData.firstName.trim() || !formData.phone.trim()) {
-      Alert.alert('Erreur', 'Veuillez remplir les champs obligatoires');
+      Alert.alert('Informations manquantes', 'Prénom et téléphone sont obligatoires.');
       return;
     }
 
     try {
-      await registerMutation.mutateAsync({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        email: formData.email || undefined,
-        address: formData.address || undefined,
-        city: formData.city,
-      });
-
-      Alert.alert('Succès', 'Compte créé avec succès !', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      const result = await requestOtp.mutateAsync(registrationPayload());
+      setChallengeId(result.challengeId);
+      setDevCode(result.devCode);
+      updateField('phone', result.phone || formData.phone);
+      setCode('');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Erreur lors de la création du compte';
-      Alert.alert('Erreur', errorMessage);
+      Alert.alert('Inscription', error.response?.data?.error || "Impossible d'envoyer le code.");
     }
   };
 
+  const verifyCode = async () => {
+    if (!challengeId || code.length !== 6) {
+      Alert.alert('Code requis', 'Entrez le code à 6 chiffres reçu par SMS.');
+      return;
+    }
+
+    try {
+      await verifyOtp.mutateAsync({
+        ...registrationPayload(),
+        challengeId,
+        code,
+      });
+      Alert.alert('Compte créé', 'Votre numéro est vérifié et votre compte ZIDA est prêt.', [
+        { text: 'Continuer', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error: any) {
+      Alert.alert('Vérification', error.response?.data?.error || 'Impossible de vérifier le code.');
+    }
+  };
+
+  if (challengeId) {
+    return (
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.hero}>
+            <View style={styles.iconWrap}><Ionicons name="shield-checkmark-outline" size={30} color={Colors.primary} /></View>
+            <Text style={styles.eyebrow}>DERNIÈRE ÉTAPE</Text>
+            <Text style={styles.title}>Vérifiez votre numéro</Text>
+            <Text style={styles.subtitle}>Entrez le code envoyé au {formData.phone}. Votre compte ne sera créé qu'après cette vérification.</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.label}>Code à 6 chiffres</Text>
+            <TextInput
+              style={styles.codeInput}
+              value={code}
+              onChangeText={(value) => setCode(value.replace(/\D/g, '').slice(0, 6))}
+              keyboardType="number-pad"
+              maxLength={6}
+              autoFocus
+              textAlign="center"
+              placeholder="000000"
+              placeholderTextColor="#C3CBD3"
+            />
+
+            {!!devCode && (
+              <View style={styles.devNotice}>
+                <Ionicons name="code-slash-outline" size={18} color={Colors.secondary} />
+                <Text style={styles.devText}>Mode test : code {devCode}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.primaryButton} onPress={verifyCode} disabled={verifyOtp.isPending}>
+              <Text style={styles.primaryText}>{verifyOtp.isPending ? 'Vérification...' : 'Vérifier et créer mon compte'}</Text>
+              <Ionicons name="checkmark-circle-outline" size={19} color={Colors.white} />
+            </TouchableOpacity>
+
+            <View style={styles.secondaryRow}>
+              <TouchableOpacity onPress={requestCode} disabled={requestOtp.isPending}>
+                <Text style={styles.link}>Renvoyer le code</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setChallengeId(null); setCode(''); setDevCode(undefined); }}>
+                <Text style={styles.link}>Modifier mes informations</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Ionicons name="person-add" size={80} color={Colors.primary} />
-          <Text style={styles.title}>Créer un compte</Text>
-          <Text style={styles.subtitle}>
-            Rejoignez ZIDA SOLAIRE pour profiter de tous nos services
-          </Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={styles.hero}>
+          <View style={styles.iconWrap}><Ionicons name="person-add-outline" size={30} color={Colors.primary} /></View>
+          <Text style={styles.eyebrow}>COMPTE ZIDA</Text>
+          <Text style={styles.title}>Créer mon compte</Text>
+          <Text style={styles.subtitle}>Retrouvez vos commandes, installations et demandes SAV dans un seul espace sécurisé.</Text>
         </View>
 
-        <View style={styles.form}>
-          {/* Prénom */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Prénom *</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color={Colors.gray} />
-              <TextInput
-                style={styles.input}
-                placeholder="Ex: Jean"
-                value={formData.firstName}
-                onChangeText={(text) => updateField('firstName', text)}
-                placeholderTextColor={Colors.textSecondary}
-              />
-            </View>
-          </View>
+        <View style={styles.card}>
+          <Field label="Prénom *" icon="person-outline" value={formData.firstName} onChangeText={(v) => updateField('firstName', v)} placeholder="Votre prénom" />
+          <Field label="Nom" icon="person-outline" value={formData.lastName} onChangeText={(v) => updateField('lastName', v)} placeholder="Votre nom" />
+          <Field label="Téléphone *" icon="call-outline" value={formData.phone} onChangeText={(v) => updateField('phone', v)} placeholder="+226 70 00 00 00" keyboardType="phone-pad" />
+          <Field label="Email" icon="mail-outline" value={formData.email} onChangeText={(v) => updateField('email', v)} placeholder="exemple@email.com" keyboardType="email-address" />
+          <Field label="Ville" icon="location-outline" value={formData.city} onChangeText={(v) => updateField('city', v)} placeholder="Ouagadougou" />
+          <Field label="Adresse" icon="home-outline" value={formData.address} onChangeText={(v) => updateField('address', v)} placeholder="Quartier, secteur, rue..." />
 
-          {/* Nom */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nom</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color={Colors.gray} />
-              <TextInput
-                style={styles.input}
-                placeholder="Ex: Dupont"
-                value={formData.lastName}
-                onChangeText={(text) => updateField('lastName', text)}
-                placeholderTextColor={Colors.textSecondary}
-              />
-            </View>
-          </View>
+          <TouchableOpacity style={styles.primaryButton} onPress={requestCode} disabled={requestOtp.isPending}>
+            <Text style={styles.primaryText}>{requestOtp.isPending ? 'Envoi...' : 'Vérifier mon numéro'}</Text>
+            <Ionicons name="arrow-forward" size={18} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Téléphone */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Téléphone *</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="call-outline" size={20} color={Colors.gray} />
-              <TextInput
-                style={styles.input}
-                placeholder="+226 70 00 00 00"
-                value={formData.phone}
-                onChangeText={(text) => updateField('phone', text)}
-                keyboardType="phone-pad"
-                placeholderTextColor={Colors.textSecondary}
-              />
-            </View>
-          </View>
+        <View style={styles.securityCard}>
+          <Ionicons name="lock-closed-outline" size={22} color={Colors.success} />
+          <Text style={styles.securityText}>Votre compte sera créé seulement après validation du code reçu sur votre téléphone.</Text>
+        </View>
 
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={Colors.gray} />
-              <TextInput
-                style={styles.input}
-                placeholder="exemple@email.com"
-                value={formData.email}
-                onChangeText={(text) => updateField('email', text)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor={Colors.textSecondary}
-              />
-            </View>
-          </View>
-
-          {/* Ville */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ville</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="location-outline" size={20} color={Colors.gray} />
-              <TextInput
-                style={styles.input}
-                placeholder="Ouagadougou"
-                value={formData.city}
-                onChangeText={(text) => updateField('city', text)}
-                placeholderTextColor={Colors.textSecondary}
-              />
-            </View>
-          </View>
-
-          {/* Adresse */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Adresse</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <Ionicons
-                name="home-outline"
-                size={20}
-                color={Colors.gray}
-                style={styles.textAreaIcon}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Secteur, quartier, rue..."
-                value={formData.address}
-                onChangeText={(text) => updateField('address', text)}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                placeholderTextColor={Colors.textSecondary}
-              />
-            </View>
-          </View>
-
-          <Button
-            title={registerMutation.isPending ? 'Création...' : "Créer mon compte"}
-            onPress={handleRegister}
-            loading={registerMutation.isPending}
-            style={styles.registerButton}
-          />
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Vous avez déjà un compte ?</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.loginLink}>Se connecter</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Vous avez déjà un compte ?</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}><Text style={styles.loginLink}>Se connecter</Text></TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
+function Field({ label, icon, value, onChangeText, placeholder, keyboardType }: any) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.inputWrap}>
+        <Ionicons name={icon} size={19} color={Colors.gray} />
+        <TextInput
+          style={styles.input}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          keyboardType={keyboardType}
+          autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
+          placeholderTextColor={Colors.textSecondary}
+        />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  form: {
-    flex: 1,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: Colors.light,
-  },
-  textAreaContainer: {
-    alignItems: 'flex-start',
-    paddingTop: 12,
-  },
-  textAreaIcon: {
-    marginTop: 2,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: Colors.text,
-    paddingVertical: 16,
-    paddingLeft: 12,
-  },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 0,
-  },
-  registerButton: {
-    marginTop: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  footerText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  loginLink: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
+  container: { flex: 1, backgroundColor: '#F6F8FB' },
+  content: { flexGrow: 1, padding: Spacing.lg, paddingBottom: 40 },
+  hero: { marginTop: 18, marginBottom: 20 },
+  iconWrap: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#FFF3EC', alignItems: 'center', justifyContent: 'center' },
+  eyebrow: { color: Colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 1, marginTop: 16 },
+  title: { fontSize: Typography.h1, fontWeight: '900', color: Colors.text, marginTop: 5 },
+  subtitle: { color: Colors.textSecondary, lineHeight: 21, marginTop: 8 },
+  card: { backgroundColor: Colors.white, borderRadius: Radius.xl, padding: Spacing.xl, ...Shadow.card },
+  field: { marginBottom: 15 },
+  label: { color: Colors.text, fontSize: 13, fontWeight: '800', marginBottom: 7 },
+  inputWrap: { minHeight: 52, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#DDE3E9', borderRadius: Radius.md, paddingHorizontal: 13 },
+  input: { flex: 1, color: Colors.text, fontSize: 15, paddingVertical: 13, paddingLeft: 9 },
+  codeInput: { height: 66, borderRadius: Radius.md, borderWidth: 1.5, borderColor: Colors.primary, fontSize: 30, fontWeight: '900', letterSpacing: 8, color: Colors.text, backgroundColor: '#FFFDFC' },
+  devNotice: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF4FA', borderRadius: Radius.md, padding: 12, marginTop: 12 },
+  devText: { color: Colors.secondary, fontWeight: '800', marginLeft: 8 },
+  primaryButton: { height: 54, borderRadius: Radius.md, backgroundColor: Colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  primaryText: { color: Colors.white, fontWeight: '900', marginRight: 8 },
+  secondaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
+  link: { color: Colors.secondary, fontWeight: '800', fontSize: 13 },
+  securityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECF8F1', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 16 },
+  securityText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 12, lineHeight: 18 },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
+  footerText: { color: Colors.textSecondary },
+  loginLink: { color: Colors.primary, fontWeight: '900', marginLeft: 5 },
 });
