@@ -2,10 +2,6 @@ name: Build Preview APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [refonte-ux-v2]
-    paths:
-      - .github/workflows/build-preview-apk.yml
 
 permissions:
   contents: read
@@ -14,18 +10,22 @@ jobs:
   build-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
         run: npm ci
@@ -34,17 +34,10 @@ jobs:
         run: npm run typecheck
 
       - name: Verify Expo authentication
-        shell: bash
-        run: |
-          if [ -z "$EXPO_TOKEN" ]; then
-            echo "EXPO_TOKEN is not configured in GitHub Actions secrets."
-            echo "Create an Expo access token and save it as repository secret EXPO_TOKEN, then re-run this workflow."
-            exit 1
-          fi
-          npx --yes eas-cli@latest whoami
+        run: eas whoami
 
       - name: Build Android preview APK with EAS
-        run: npx --yes eas-cli@latest build --platform android --profile preview --non-interactive --wait --json > eas-build.json
+        run: eas build --platform android --profile preview --non-interactive --wait --json > eas-build.json
 
       - name: Publish build summary
         if: always()
