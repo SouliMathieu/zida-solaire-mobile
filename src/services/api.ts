@@ -118,20 +118,45 @@ export const createOrder = async (orderData: {
   return response.data;
 };
 
-export const customerLogin = async (phone: string) => {
+export type OtpChallengeResponse = {
+  challengeId: string;
+  phone: string;
+  expiresIn: number;
+  devCode?: string;
+};
+
+export const customerLogin = async (phone: string): Promise<OtpChallengeResponse> => {
   const response = await api.post('/customer/login', { phone });
   return response.data;
 };
 
-export const customerRegister = async (userData: {
+export const verifyCustomerLoginOtp = async (data: {
+  challengeId: string;
+  phone: string;
+  code: string;
+}) => {
+  const response = await api.post('/customer/login/verify', data);
+  return response.data;
+};
+
+export type RegistrationData = {
   firstName: string;
   lastName: string;
   email?: string;
   phone: string;
   address?: string;
   city?: string;
-}) => {
+};
+
+export const customerRegister = async (userData: RegistrationData): Promise<OtpChallengeResponse> => {
   const response = await api.post('/customer/register', userData);
+  return response.data;
+};
+
+export const verifyCustomerRegisterOtp = async (
+  userData: RegistrationData & { challengeId: string; code: string }
+) => {
+  const response = await api.post('/customer/register/verify', userData);
   return response.data;
 };
 
