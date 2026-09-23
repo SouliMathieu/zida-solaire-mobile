@@ -9,6 +9,7 @@ import { useUserStore } from '../../store/userStore';
 import { useCartStore } from '../../store/cartStore';
 import { useOrdersStore } from '../../store/ordersStore';
 import { useNotifications } from '../../hooks/useNotifications';
+import { revokePushTokenOnLogout } from '../../services/pushNotifications';
 import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 
@@ -21,6 +22,11 @@ export default function ProfileScreen() {
   const orderCount = useOrdersStore((state) => state.getOrders().length);
   const notifications = useNotifications();
   const unreadCount = notifications.data?.unreadCount || 0;
+
+  const handleLogout = async () => {
+    await revokePushTokenOnLogout();
+    logout();
+  };
 
   if (!isAuthenticated()) {
     return (
@@ -76,7 +82,7 @@ export default function ProfileScreen() {
         <MenuRow icon="information-circle-outline" title="À propos de ZIDA" subtitle="Entreprise, services et informations" onPress={() => navigation.navigate('About')} last />
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color={Colors.error} />
         <Text style={styles.logoutText}>Se déconnecter</Text>
       </TouchableOpacity>
