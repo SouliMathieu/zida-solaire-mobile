@@ -56,6 +56,7 @@ export default function App() {
       if (!response) return;
       const data = response.notification.request.content.data as PushData;
       if (!openPushDestination(data)) pendingPush.current = data;
+      Notifications.clearLastNotificationResponseAsync().catch(() => undefined);
     };
 
     const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
