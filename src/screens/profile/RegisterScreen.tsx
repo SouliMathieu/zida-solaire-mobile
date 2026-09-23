@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  KeyboardTypeOptions,
 } from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
@@ -173,12 +174,21 @@ export default function RegisterScreen() {
   );
 }
 
-function Field({ label, icon, value, onChangeText, placeholder, keyboardType }: any) {
+type FieldProps = {
+  label: string;
+  icon: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  keyboardType?: KeyboardTypeOptions;
+};
+
+function Field({ label, icon, value, onChangeText, placeholder, keyboardType }: FieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputWrap}>
-        <Ionicons name={icon} size={19} color={Colors.gray} />
+        <Ionicons name={icon as any} size={19} color={Colors.gray} />
         <TextInput
           style={styles.input}
           value={value}
