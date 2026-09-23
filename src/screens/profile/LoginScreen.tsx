@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -26,8 +26,18 @@ export default function LoginScreen() {
   const [code, setCode] = useState('');
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [devCode, setDevCode] = useState<string | undefined>();
+  const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setInterval(() => {
+      setResendIn((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendIn]);
 
   const requestCode = async () => {
+    if (challengeId && resendIn > 0) return;
     if (!phone.trim()) {
       Alert.alert('Numéro requis', 'Entrez votre numéro de téléphone.');
       return;
@@ -39,7 +49,10 @@ export default function LoginScreen() {
       setDevCode(result.devCode);
       setPhone(result.phone || phone.trim());
       setCode('');
+      setResendIn(60);
     } catch (error: any) {
+      const retryAfter = Number(error.response?.data?.retryAfter || 0);
+      if (retryAfter > 0) setResendIn(retryAfter);
       Alert.alert('Connexion', error.response?.data?.error || "Impossible d'envoyer le code.");
     }
   };
@@ -64,6 +77,7 @@ export default function LoginScreen() {
     setChallengeId(null);
     setCode('');
     setDevCode(undefined);
+    setResendIn(0);
   };
 
   return (
@@ -131,8 +145,10 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <View style={styles.secondaryRow}>
-                <TouchableOpacity onPress={requestCode} disabled={requestOtp.isPending}>
-                  <Text style={styles.link}>Renvoyer le code</Text>
+                <TouchableOpacity onPress={requestCode} disabled={requestOtp.isPending || resendIn > 0}>
+                  <Text style={[styles.link, resendIn > 0 && styles.linkDisabled]}>
+                    {resendIn > 0 ? `Renvoyer dans ${resendIn}s` : 'Renvoyer le code'}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={resetPhone}>
                   <Text style={styles.link}>Changer de numéro</Text>
@@ -179,6 +195,7 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.white, fontWeight: '900', marginRight: 8 },
   secondaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
   link: { color: Colors.secondary, fontWeight: '800', fontSize: 13 },
+  linkDisabled: { color: Colors.gray },
   securityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECF8F1', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 16 },
   securityText: { flex: 1, color: Colors.text, fontSize: 12, lineHeight: 18, marginLeft: 10 },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 26 },
