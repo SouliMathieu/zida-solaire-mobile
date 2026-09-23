@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Linking, Alert } from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotificationPreferences, useNotifications, useUpdateNotificationPreferences } from '../../hooks/useNotifications';
 import { CustomerNotification, NotificationPreferences } from '../../services/api';
+import { disablePushNotifications, enablePushNotifications } from '../../services/pushNotifications';
 
 const ICONS: Record<string, string> = { order: 'receipt-outline', installation: 'construct-outline', sav: 'headset-outline', system: 'notifications-outline' };
 
@@ -15,11 +16,35 @@ export default function NotificationsScreen() {
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
   const updatePrefs = useUpdateNotificationPreferences();
+  const [pushBusy, setPushBusy] = useState(false);
   const notifications = feed.data?.notifications || [];
   const unreadCount = feed.data?.unreadCount || 0;
   const refreshing = feed.isRefetching || prefs.isRefetching;
 
   const toggle = (key: keyof NotificationPreferences, value: boolean) => updatePrefs.mutate({ [key]: value });
+
+  const togglePush = async (value: boolean) => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (value) {
+        const result = await enablePushNotifications();
+        if (!result.enabled) {
+          Alert.alert('Notifications désactivées', 'Autorisez les notifications dans les paramètres de votre téléphone pour recevoir les mises à jour ZIDA.');
+          return;
+        }
+        await prefs.refetch();
+      } else {
+        await disablePushNotifications();
+        updatePrefs.mutate({ pushEnabled: false });
+      }
+    } catch (error) {
+      console.warn('Push preference update failed:', error);
+      Alert.alert('Notifications', "Impossible de modifier les notifications push pour le moment.");
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -59,6 +84,7 @@ export default function NotificationsScreen() {
 
       <Text style={styles.preferencesTitle}>Mes préférences</Text>
       <View style={styles.card}>
+        <PreferenceRow icon="notifications-outline" title="Notifications push" subtitle="Recevoir les mises à jour même lorsque l’application est fermée" value={prefs.data?.pushEnabled ?? false} onValueChange={togglePush} disabled={pushBusy} />
         <PreferenceRow icon="receipt-outline" title="Commandes" subtitle="Confirmation, préparation, expédition et livraison" value={prefs.data?.orderUpdates ?? true} onValueChange={(v) => toggle('orderUpdates', v)} />
         <PreferenceRow icon="construct-outline" title="Installations" subtitle="Devis, planification et fin de chantier" value={prefs.data?.installationUpdates ?? true} onValueChange={(v) => toggle('installationUpdates', v)} />
         <PreferenceRow icon="headset-outline" title="Assistance / SAV" subtitle="Prise en charge et clôture de vos tickets" value={prefs.data?.savUpdates ?? true} onValueChange={(v) => toggle('savUpdates', v)} />
@@ -90,12 +116,12 @@ function ActivityRow({ item, last, onPress }: { item: CustomerNotification; last
   );
 }
 
-function PreferenceRow({ icon, title, subtitle, value, onValueChange, last }: { icon: string; title: string; subtitle: string; value: boolean; onValueChange: (value: boolean) => void; last?: boolean }) {
+function PreferenceRow({ icon, title, subtitle, value, onValueChange, last, disabled }: { icon: string; title: string; subtitle: string; value: boolean; onValueChange: (value: boolean) => void; last?: boolean; disabled?: boolean }) {
   return (
     <View style={[styles.row, last && styles.rowLast]}>
       <View style={styles.rowIcon}><Ionicons name={icon as any} size={20} color={Colors.secondary} /></View>
       <View style={{ flex: 1 }}><Text style={styles.preferenceTitle}>{title}</Text><Text style={styles.preferenceSubtitle}>{subtitle}</Text></View>
-      <Switch value={value} onValueChange={onValueChange} trackColor={{ false: Colors.light, true: '#FFD8C8' }} thumbColor={value ? Colors.primary : Colors.gray} />
+      <Switch disabled={disabled} value={value} onValueChange={onValueChange} trackColor={{ false: Colors.light, true: '#FFD8C8' }} thumbColor={value ? Colors.primary : Colors.gray} />
     </View>
   );
 }
