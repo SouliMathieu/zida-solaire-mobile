@@ -7,15 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const api = axios.create({
   baseURL: API_URL,
   timeout: CONFIG.apiTimeout,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 async function getPersistedAuthToken() {
   const raw = await AsyncStorage.getItem('user-storage');
   if (!raw) return null;
-
   try {
     const parsed = JSON.parse(raw);
     return parsed?.state?.token || null;
@@ -24,31 +21,22 @@ async function getPersistedAuthToken() {
   }
 }
 
-api.interceptors.request.use(
-  async (config) => {
-    try {
-      const token = await getPersistedAuthToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch (error) {
-      console.error('Error getting auth token:', error);
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+api.interceptors.request.use(async (config) => {
+  try {
+    const token = await getPersistedAuthToken();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+  }
+  return config;
+});
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response) {
-      console.error('API Error:', error.response.status, error.response.data);
-    } else if (error.request) {
-      console.error('Network Error:', error.request);
-    } else {
-      console.error('Error:', error.message);
-    }
+    if (error.response) console.error('API Error:', error.response.status, error.response.data);
+    else if (error.request) console.error('Network Error:', error.request);
+    else console.error('Error:', error.message);
     return Promise.reject(error);
   }
 );
@@ -63,20 +51,9 @@ export const fetchProducts = async (params?: { categoryId?: string; search?: str
   return response.data.products || response.data;
 };
 
-export const fetchProductById = async (id: string) => {
-  const response = await api.get(`/products/${id}`);
-  return response.data;
-};
-
-export const fetchCategories = async () => {
-  const response = await api.get('/categories');
-  return response.data;
-};
-
-export const fetchCategoryById = async (id: string) => {
-  const response = await api.get(`/categories/${id}`);
-  return response.data;
-};
+export const fetchProductById = async (id: string) => (await api.get(`/products/${id}`)).data;
+export const fetchCategories = async () => (await api.get('/categories')).data;
+export const fetchCategoryById = async (id: string) => (await api.get(`/categories/${id}`)).data;
 
 export const createOrder = async (orderData: {
   items: Array<{ productId: string; name: string; quantity: number; price: number }>;
@@ -92,7 +69,6 @@ export const createOrder = async (orderData: {
   const lastName = nameParts.slice(1).join(' ') || 'Mobile';
   const subtotal = orderData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = 0;
-
   const response = await api.post('/checkout', {
     customer: {
       firstName,
@@ -125,19 +101,11 @@ export type OtpChallengeResponse = {
   devCode?: string;
 };
 
-export const customerLogin = async (phone: string): Promise<OtpChallengeResponse> => {
-  const response = await api.post('/customer/login', { phone });
-  return response.data;
-};
+export const customerLogin = async (phone: string): Promise<OtpChallengeResponse> =>
+  (await api.post('/customer/login', { phone })).data;
 
-export const verifyCustomerLoginOtp = async (data: {
-  challengeId: string;
-  phone: string;
-  code: string;
-}) => {
-  const response = await api.post('/customer/login/verify', data);
-  return response.data;
-};
+export const verifyCustomerLoginOtp = async (data: { challengeId: string; phone: string; code: string }) =>
+  (await api.post('/customer/login/verify', data)).data;
 
 export type RegistrationData = {
   firstName: string;
@@ -148,36 +116,19 @@ export type RegistrationData = {
   city?: string;
 };
 
-export const customerRegister = async (userData: RegistrationData): Promise<OtpChallengeResponse> => {
-  const response = await api.post('/customer/register', userData);
-  return response.data;
-};
+export const customerRegister = async (userData: RegistrationData): Promise<OtpChallengeResponse> =>
+  (await api.post('/customer/register', userData)).data;
 
-export const verifyCustomerRegisterOtp = async (
-  userData: RegistrationData & { challengeId: string; code: string }
-) => {
-  const response = await api.post('/customer/register/verify', userData);
-  return response.data;
-};
+export const verifyCustomerRegisterOtp = async (userData: RegistrationData & { challengeId: string; code: string }) =>
+  (await api.post('/customer/register/verify', userData)).data;
 
-export const requestCustomerPhoneChange = async (phone: string): Promise<OtpChallengeResponse> => {
-  const response = await api.post('/customer/phone-change/request', { phone });
-  return response.data;
-};
+export const requestCustomerPhoneChange = async (phone: string): Promise<OtpChallengeResponse> =>
+  (await api.post('/customer/phone-change/request', { phone })).data;
 
-export const verifyCustomerPhoneChange = async (data: {
-  challengeId: string;
-  phone: string;
-  code: string;
-}) => {
-  const response = await api.post('/customer/phone-change/verify', data);
-  return response.data;
-};
+export const verifyCustomerPhoneChange = async (data: { challengeId: string; phone: string; code: string }) =>
+  (await api.post('/customer/phone-change/verify', data)).data;
 
-export const getCustomerProfile = async () => {
-  const response = await api.get('/customer/profile');
-  return response.data;
-};
+export const getCustomerProfile = async () => (await api.get('/customer/profile')).data;
 
 export const updateCustomerProfile = async (userData: {
   firstName?: string;
@@ -186,25 +137,47 @@ export const updateCustomerProfile = async (userData: {
   phone?: string;
   address?: string;
   city?: string;
-}) => {
-  const response = await api.patch('/customer/profile', userData);
-  return response.data;
+}) => (await api.patch('/customer/profile', userData)).data;
+
+export const fetchCustomerOrders = async () => (await api.get('/customer/orders')).data.orders || [];
+export const fetchCustomerInstallations = async () => (await api.get('/customer/installations')).data.installations || [];
+export const fetchCustomerRepairRequests = async () => (await api.get('/customer/repair-requests')).data.repairs || [];
+
+export type CustomerNotification = {
+  id: string;
+  type: 'order' | 'installation' | 'sav' | 'system';
+  title: string;
+  message: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  route?: string | null;
+  readAt?: string | null;
+  createdAt: string;
 };
 
-export const fetchCustomerOrders = async () => {
-  const response = await api.get('/customer/orders');
-  return response.data.orders || [];
+export type NotificationPreferences = {
+  orderUpdates: boolean;
+  installationUpdates: boolean;
+  savUpdates: boolean;
+  promotions: boolean;
+  solarTips: boolean;
+  pushEnabled: boolean;
 };
 
-export const fetchCustomerInstallations = async () => {
-  const response = await api.get('/customer/installations');
-  return response.data.installations || [];
-};
+export const fetchCustomerNotifications = async (): Promise<{ notifications: CustomerNotification[]; unreadCount: number }> =>
+  (await api.get('/customer/notifications')).data;
 
-export const fetchCustomerRepairRequests = async () => {
-  const response = await api.get('/customer/repair-requests');
-  return response.data.repairs || [];
-};
+export const markCustomerNotificationRead = async (id: string) =>
+  (await api.patch('/customer/notifications', { id })).data;
+
+export const markAllCustomerNotificationsRead = async () =>
+  (await api.patch('/customer/notifications', { all: true })).data;
+
+export const fetchNotificationPreferences = async (): Promise<NotificationPreferences> =>
+  (await api.get('/customer/notifications/preferences')).data;
+
+export const updateNotificationPreferences = async (data: Partial<NotificationPreferences>): Promise<NotificationPreferences> =>
+  (await api.patch('/customer/notifications/preferences', data)).data;
 
 export const sendContactMessage = async (contactData: {
   name: string;
@@ -212,23 +185,13 @@ export const sendContactMessage = async (contactData: {
   phone: string;
   message: string;
   subject?: string;
-}) => {
-  const response = await api.post('/contact', {
-    ...contactData,
-    subject: contactData.subject || 'Demande de contact',
-  });
-  return response.data;
-};
+}) => (await api.post('/contact', { ...contactData, subject: contactData.subject || 'Demande de contact' })).data;
 
-export const createInstallationRequest = async (requestData: any) => {
-  const response = await api.post('/installation-requests', requestData);
-  return response.data;
-};
+export const createInstallationRequest = async (requestData: any) =>
+  (await api.post('/installation-requests', requestData)).data;
 
-export const createDevisRequest = async (devisData: any) => {
-  const response = await api.post('/devis', devisData);
-  return response.data;
-};
+export const createDevisRequest = async (devisData: any) =>
+  (await api.post('/devis', devisData)).data;
 
 export const createRepairRequest = async (requestData: {
   name: string;
@@ -238,7 +201,4 @@ export const createRepairRequest = async (requestData: {
   problemDescription: string;
   urgency: 'low' | 'normal' | 'high';
   installedByZida: 'yes' | 'no';
-}) => {
-  const response = await api.post('/repair-requests', requestData);
-  return response.data;
-};
+}) => (await api.post('/repair-requests', requestData)).data;
