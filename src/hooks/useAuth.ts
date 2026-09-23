@@ -1,47 +1,41 @@
 // src/hooks/useAuth.ts
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { customerLogin, customerRegister, getCustomerProfile, updateCustomerProfile } from '../services/api';
+import {
+  customerLogin,
+  customerRegister,
+  getCustomerProfile,
+  RegistrationData,
+  updateCustomerProfile,
+  verifyCustomerLoginOtp,
+  verifyCustomerRegisterOtp,
+} from '../services/api';
 import { useUserStore } from '../store/userStore';
 
-export const useLogin = () => {
-  const setUser = useUserStore((state) => state.setUser);
+export const useRequestLoginOtp = () =>
+  useMutation({ mutationFn: (phone: string) => customerLogin(phone) });
 
+export const useVerifyLoginOtp = () => {
+  const setUser = useUserStore((state) => state.setUser);
   return useMutation({
-    mutationFn: async (phone: string) => {
-      const data = await customerLogin(phone);
-      return data;
-    },
-    onSuccess: (data) => {
-      setUser(data.user, data.token);
-    },
+    mutationFn: verifyCustomerLoginOtp,
+    onSuccess: (data) => setUser(data.user, data.token),
   });
 };
 
-export const useRegister = () => {
-  const setUser = useUserStore((state) => state.setUser);
+export const useRequestRegisterOtp = () =>
+  useMutation({ mutationFn: (userData: RegistrationData) => customerRegister(userData) });
 
+export const useVerifyRegisterOtp = () => {
+  const setUser = useUserStore((state) => state.setUser);
   return useMutation({
-    mutationFn: async (userData: {
-      firstName: string;
-      lastName: string;
-      email?: string;
-      phone: string;
-      address?: string;
-      city?: string;
-    }) => {
-      const data = await customerRegister(userData);
-      return data;
-    },
-    onSuccess: (data) => {
-      setUser(data.user, data.token);
-    },
+    mutationFn: verifyCustomerRegisterOtp,
+    onSuccess: (data) => setUser(data.user, data.token),
   });
 };
 
 export const useProfile = () => {
   const token = useUserStore((state) => state.token);
-
   return useQuery({
     queryKey: ['profile'],
     queryFn: getCustomerProfile,
@@ -61,10 +55,7 @@ export const useUpdateProfile = () => {
       phone?: string;
       address?: string;
       city?: string;
-    }) => {
-      const data = await updateCustomerProfile(userData);
-      return data;
-    },
+    }) => updateCustomerProfile(userData),
     onSuccess: (data) => {
       updateUser(data);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
