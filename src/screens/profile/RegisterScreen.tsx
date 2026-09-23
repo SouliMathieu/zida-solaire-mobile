@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ export default function RegisterScreen() {
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | undefined>();
+  const [resendIn, setResendIn] = useState(0);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -34,6 +35,14 @@ export default function RegisterScreen() {
     address: '',
     city: 'Ouagadougou',
   });
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setInterval(() => {
+      setResendIn((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendIn]);
 
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -49,6 +58,7 @@ export default function RegisterScreen() {
   });
 
   const requestCode = async () => {
+    if (challengeId && resendIn > 0) return;
     if (!formData.firstName.trim() || !formData.phone.trim()) {
       Alert.alert('Informations manquantes', 'Prénom et téléphone sont obligatoires.');
       return;
@@ -60,7 +70,10 @@ export default function RegisterScreen() {
       setDevCode(result.devCode);
       updateField('phone', result.phone || formData.phone);
       setCode('');
+      setResendIn(60);
     } catch (error: any) {
+      const retryAfter = Number(error.response?.data?.retryAfter || 0);
+      if (retryAfter > 0) setResendIn(retryAfter);
       Alert.alert('Inscription', error.response?.data?.error || "Impossible d'envoyer le code.");
     }
   };
@@ -83,6 +96,13 @@ export default function RegisterScreen() {
     } catch (error: any) {
       Alert.alert('Vérification', error.response?.data?.error || 'Impossible de vérifier le code.');
     }
+  };
+
+  const resetRegistration = () => {
+    setChallengeId(null);
+    setCode('');
+    setDevCode(undefined);
+    setResendIn(0);
   };
 
   if (challengeId) {
@@ -123,10 +143,12 @@ export default function RegisterScreen() {
             </TouchableOpacity>
 
             <View style={styles.secondaryRow}>
-              <TouchableOpacity onPress={requestCode} disabled={requestOtp.isPending}>
-                <Text style={styles.link}>Renvoyer le code</Text>
+              <TouchableOpacity onPress={requestCode} disabled={requestOtp.isPending || resendIn > 0}>
+                <Text style={[styles.link, resendIn > 0 && styles.linkDisabled]}>
+                  {resendIn > 0 ? `Renvoyer dans ${resendIn}s` : 'Renvoyer le code'}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setChallengeId(null); setCode(''); setDevCode(undefined); }}>
+              <TouchableOpacity onPress={resetRegistration}>
                 <Text style={styles.link}>Modifier mes informations</Text>
               </TouchableOpacity>
             </View>
@@ -223,6 +245,7 @@ const styles = StyleSheet.create({
   primaryText: { color: Colors.white, fontWeight: '900', marginRight: 8 },
   secondaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
   link: { color: Colors.secondary, fontWeight: '800', fontSize: 13 },
+  linkDisabled: { color: Colors.gray },
   securityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECF8F1', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 16 },
   securityText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 12, lineHeight: 18 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
