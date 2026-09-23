@@ -179,6 +179,15 @@ export const fetchNotificationPreferences = async (): Promise<NotificationPrefer
 export const updateNotificationPreferences = async (data: Partial<NotificationPreferences>): Promise<NotificationPreferences> =>
   (await api.patch('/customer/notifications/preferences', data)).data;
 
+export const registerCustomerPushToken = async (data: {
+  token: string;
+  platform: 'android' | 'ios';
+  deviceId?: string;
+}) => (await api.post('/customer/push-token', data)).data;
+
+export const revokeCustomerPushToken = async (token: string) =>
+  (await api.delete('/customer/push-token', { data: { token } })).data;
+
 export const sendContactMessage = async (contactData: {
   name: string;
   email: string;
