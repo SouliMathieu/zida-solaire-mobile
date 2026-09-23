@@ -7,6 +7,7 @@ import LoginScreen from '../screens/profile/LoginScreen';
 import RegisterScreen from '../screens/profile/RegisterScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import ChangePhoneScreen from '../screens/profile/ChangePhoneScreen';
+import NotificationsScreen from '../screens/profile/NotificationsScreen';
 import AboutScreen from '../screens/profile/AboutScreen';
 import ContactScreen from '../screens/profile/ContactScreen';
 import DevisScreen from '../screens/profile/DevisScreen';
@@ -22,6 +23,7 @@ export type ProfileStackParamList = {
   Register: undefined;
   EditProfile: undefined;
   ChangePhone: undefined;
+  Notifications: undefined;
   About: undefined;
   Contact: undefined;
   Devis: undefined;
@@ -48,6 +50,7 @@ export default function ProfileStackNavigator() {
       <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Inscription' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Modifier le profil' }} />
       <Stack.Screen name="ChangePhone" component={ChangePhoneScreen} options={{ title: 'Changer mon numéro' }} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Activité & notifications' }} />
       <Stack.Screen name="About" component={AboutScreen} options={{ title: 'À propos' }} />
       <Stack.Screen name="Contact" component={ContactScreen} options={{ title: 'Contact' }} />
       <Stack.Screen name="Devis" component={DevisScreen} options={{ title: 'Demande de devis' }} />
