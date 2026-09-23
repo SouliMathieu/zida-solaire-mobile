@@ -1,11 +1,11 @@
 // src/constants/config.ts
 
 export const API_URL = 'https://site-de-l-entreprise-zida-solaire-a-snowy.vercel.app/api';
+export const EXPO_PROJECT_ID = '3275d822-55c4-4de6-9a73-58a2fbde2346';
 
-// Mettre à false pour utiliser l'API réelle
-export const USE_MOCK_DATA = false; // ← Changé à false pour utiliser l'API réelle
+export const USE_MOCK_DATA = false;
 
 export const CONFIG = {
-  apiTimeout: 60000, // 30 secondes
+  apiTimeout: 60000,
   retryAttempts: 3,
 };
