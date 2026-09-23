@@ -18,7 +18,7 @@ import { useUserStore } from '../../store/userStore';
 import { useUpdateProfile } from '../../hooks/useAuth';
 
 export default function EditProfileScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { user } = useUserStore();
   const updateProfileMutation = useUpdateProfile();
 
@@ -72,7 +72,11 @@ export default function EditProfileScreen() {
             <View style={styles.verifiedIcon}><Ionicons name="shield-checkmark" size={20} color={Colors.success} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.phoneValue}>{user?.phone || '—'}</Text>
-              <Text style={styles.phoneHelp}>Ce numéro est votre identifiant sécurisé. Son changement nécessitera une nouvelle vérification OTP.</Text>
+              <Text style={styles.phoneHelp}>Ce numéro est votre identifiant sécurisé. Son changement nécessite une nouvelle vérification OTP.</Text>
+              <TouchableOpacity style={styles.changePhoneButton} onPress={() => navigation.navigate('ChangePhone')}>
+                <Ionicons name="swap-horizontal-outline" size={17} color={Colors.secondary} />
+                <Text style={styles.changePhoneText}>Changer ce numéro</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -145,6 +149,8 @@ const styles = StyleSheet.create({
   verifiedIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', marginRight: 11 },
   phoneValue: { color: Colors.text, fontWeight: '900', fontSize: 15 },
   phoneHelp: { color: Colors.textSecondary, fontSize: 11, lineHeight: 16, marginTop: 3 },
+  changePhoneButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5 },
+  changePhoneText: { color: Colors.secondary, fontWeight: '900', fontSize: 12, marginLeft: 5 },
   saveButton: { minHeight: 54, backgroundColor: Colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: Radius.md, marginTop: 4 },
   saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: { color: Colors.white, fontSize: 15, fontWeight: '900', marginLeft: 8 },
