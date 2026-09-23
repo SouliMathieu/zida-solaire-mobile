@@ -6,8 +6,10 @@ import {
   customerRegister,
   getCustomerProfile,
   RegistrationData,
+  requestCustomerPhoneChange,
   updateCustomerProfile,
   verifyCustomerLoginOtp,
+  verifyCustomerPhoneChange,
   verifyCustomerRegisterOtp,
 } from '../services/api';
 import { useUserStore } from '../store/userStore';
@@ -31,6 +33,25 @@ export const useVerifyRegisterOtp = () => {
   return useMutation({
     mutationFn: verifyCustomerRegisterOtp,
     onSuccess: (data) => setUser(data.user, data.token),
+  });
+};
+
+export const useRequestPhoneChangeOtp = () =>
+  useMutation({ mutationFn: (phone: string) => requestCustomerPhoneChange(phone) });
+
+export const useVerifyPhoneChangeOtp = () => {
+  const setUser = useUserStore((state) => state.setUser);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: verifyCustomerPhoneChange,
+    onSuccess: (data) => {
+      setUser(data.user, data.token);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-installations'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-repairs'] });
+    },
   });
 };
 
