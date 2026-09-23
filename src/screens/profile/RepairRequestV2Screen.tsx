@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { createRepairRequest } from '../../services/api';
@@ -18,8 +19,10 @@ const TYPES = [
 ];
 
 export default function RepairRequestV2Screen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const user = useUserStore((state) => state.user);
+  const authenticated = useUserStore((state) => state.isAuthenticated());
   const [sending, setSending] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -45,10 +48,18 @@ export default function RepairRequestV2Screen() {
         urgency,
         installedByZida,
       });
+      await queryClient.invalidateQueries({ queryKey: ['customer-repairs'] });
       const ticket = result?.repairRequest?.id ? `\nRéférence : ${result.repairRequest.id}` : '';
-      Alert.alert('Demande SAV envoyée', `Votre demande a été enregistrée dans le système ZIDA SOLAIRE.${ticket}`, [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      Alert.alert(
+        'Demande SAV envoyée',
+        `Votre demande a été enregistrée dans le système ZIDA SOLAIRE.${ticket}`,
+        authenticated
+          ? [
+              { text: 'Fermer', style: 'cancel', onPress: () => navigation.goBack() },
+              { text: 'Voir mes tickets', onPress: () => navigation.replace('RepairTickets') },
+            ]
+          : [{ text: 'OK', onPress: () => navigation.goBack() }],
+      );
     } catch (error: any) {
       Alert.alert('Erreur', error.response?.data?.error || "Impossible d'envoyer la demande SAV.");
     } finally {
