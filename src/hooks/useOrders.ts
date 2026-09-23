@@ -42,7 +42,7 @@ export const useOrders = () => {
   const getOrders = useOrdersStore((state) => state.getOrders);
   const authenticated = useUserStore((state) => !!state.user && !!state.token);
 
-  return useQuery({
+  return useQuery<Order[]>({
     queryKey: ['orders', authenticated ? 'server' : 'local'],
     queryFn: async () => {
       if (authenticated && !USE_MOCK_DATA) {
@@ -60,9 +60,9 @@ export const useOrders = () => {
 
 export const useOrder = (id: string) => {
   const { data: orders = [] } = useOrders();
-  return useQuery({
+  return useQuery<Order | undefined>({
     queryKey: ['order', id, orders.length],
-    queryFn: async () => orders.find((order) => order.id === id),
+    queryFn: async () => orders.find((order: Order) => order.id === id),
     enabled: !!id,
   });
 };
