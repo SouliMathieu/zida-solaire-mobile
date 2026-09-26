@@ -61,7 +61,7 @@ export default function RepairRequestV2Screen() {
           : [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
     } catch (error: any) {
-      Alert.alert('Erreur', error.response?.data?.error || "Impossible d'envoyer la demande SAV.");
+      Alert.alert('Erreur', error.response?.data?.error || "Impossible d'envoyer la demande d'assistance.");
     } finally {
       setSending(false);
     }
@@ -128,7 +128,7 @@ export default function RepairRequestV2Screen() {
       <View style={styles.footer}>
         <TouchableOpacity style={[styles.submit, sending && { opacity: 0.6 }]} onPress={submit} disabled={sending}>
           {sending ? <ActivityIndicator color={Colors.white} /> : <>
-            <Text style={styles.submitText}>Envoyer ma demande SAV</Text>
+            <Text style={styles.submitText}>Envoyer ma demande d'assistance</Text>
             <Ionicons name="arrow-forward" size={18} color={Colors.white} />
           </>}
         </TouchableOpacity>

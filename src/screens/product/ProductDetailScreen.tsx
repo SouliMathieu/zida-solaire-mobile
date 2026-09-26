@@ -7,6 +7,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
+import { navigationRef } from '../../navigation/navigationRef';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { useCartStore } from '../../store/cartStore';
 import { useProduct } from '../../hooks/useProducts';
@@ -44,7 +45,13 @@ export default function ProductDetailScreen() {
     addToCart(product, quantity);
     Alert.alert('Ajouté au panier', `${quantity} article${quantity > 1 ? 's' : ''} ajouté${quantity > 1 ? 's' : ''}.`, [
       { text: 'Continuer' },
-      { text: 'Voir le panier', onPress: () => navigation.getParent()?.getParent()?.navigate('Compte', { screen: 'CartArea' }) },
+      { text: 'Voir le panier', onPress: () => {
+        if (navigationRef.isReady()) {
+          navigationRef.navigate('Profil', {
+            screen: 'CartArea',
+          });
+        }
+      } },
     ]);
   };
 
@@ -99,7 +106,7 @@ export default function ProductDetailScreen() {
             </View>
             {currentQuantityInCart > 0 && (
               <View style={styles.inCartBadge}>
-                <Ionicons name="bag-check-outline" size={16} color={Colors.primary} />
+                <Ionicons name="cart-outline" size={16} color={Colors.primary} />
                 <Text style={styles.inCartText}>{currentQuantityInCart} au panier</Text>
               </View>
             )}
@@ -153,8 +160,15 @@ export default function ProductDetailScreen() {
           )}
 
           <Section title="Besoin d'aide avant l'achat ?">
-            <TouchableOpacity style={styles.adviceCard} onPress={() => navigation.getParent()?.getParent()?.navigate('Assistance')}>
-              <View style={styles.adviceIcon}><Ionicons name="headset-outline" size={25} color={Colors.primary} /></View>
+            <TouchableOpacity
+  style={styles.adviceCard}
+  onPress={() =>
+    navigation.getParent()?.navigate('Assistance', {
+      screen: 'SupportHome',
+    })
+  }
+>
+              <View style={styles.adviceIcon}><Ionicons name="chatbubbles-outline" size={25} color={Colors.primary} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.adviceTitle}>Parler à ZIDA SOLAIRE</Text>
                 <Text style={styles.adviceText}>Demandez conseil pour vérifier la compatibilité avec votre projet.</Text>
@@ -176,7 +190,7 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={[styles.addButton, !canAddToCart && styles.addButtonDisabled]} onPress={handleAddToCart} disabled={!canAddToCart}>
-          <Ionicons name="bag-add-outline" size={20} color={Colors.white} />
+          <Ionicons name="cart-outline" size={20} color={Colors.white} />
           <Text style={styles.addButtonText}>{canAddToCart ? 'Ajouter au panier' : 'Indisponible'}</Text>
         </TouchableOpacity>
       </View>

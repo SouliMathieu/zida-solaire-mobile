@@ -7,7 +7,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { HomeStackParamList } from '../../navigation/HomeStackNavigator';
-import { SOLAR_APPLIANCES, SolarApplianceId, SolarApplianceSelection, SolarPropertyType } from '../../utils/solarEstimator';
+import {
+  SOLAR_APPLIANCES,
+  getSolarProjectProfile,
+  SolarApplianceId,
+  SolarApplianceSelection,
+  SolarPropertyType,
+} from '../../utils/solarEstimator';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'SolarAssistant'>;
 
@@ -31,16 +37,60 @@ export default function SolarAssistantScreen() {
   const [step, setStep] = useState(1);
   const [propertyType, setPropertyType] = useState<SolarPropertyType>('home');
   const [rooms, setRooms] = useState(3);
+  const [occupants, setOccupants] = useState(4);
+  const [employees, setEmployees] = useState(5);
+  const [activity, setActivity] = useState('');
+  const [openingHour, setOpeningHour] = useState('8');
+  const [closingHour, setClosingHour] = useState('18');
+  const [dailyWaterM3, setDailyWaterM3] = useState('');
+  const [pumpHeadM, setPumpHeadM] = useState('');
   const [appliances, setAppliances] = useState<SolarApplianceSelection[]>([
     { id: 'lights', quantity: 1, hoursPerDay: 6 },
     { id: 'tv', quantity: 1, hoursPerDay: 5 },
   ]);
   const [autonomyHours, setAutonomyHours] = useState(8);
-  const [monthlyBill, setMonthlyBill] = useState('25 000 – 50 000 FCFA');
+   const [monthlyBill, setMonthlyBill] = useState('25 000 – 50 000 FCFA');
 
-  const selectedIds = useMemo(() => appliances.map((a) => a.id), [appliances]);
 
-  const toggleAppliance = (id: SolarApplianceId) => {
+  const profile = useMemo(
+    () => getSolarProjectProfile(propertyType),
+    [propertyType],
+  );
+
+  const selectedIds = useMemo(
+    () => appliances.map((a) => a.id),
+    [appliances],
+  );
+
+  const handlePropertyTypeChange = (nextType: SolarPropertyType) => {
+    const nextProfile = getSolarProjectProfile(nextType);
+
+    setPropertyType(nextType);
+    setAutonomyHours(nextProfile.recommendedAutonomyHours);
+
+    setAppliances((current) => {
+      const allowed = new Set(nextProfile.applianceIds);
+
+      const filtered = current.filter((item) =>
+        allowed.has(item.id),
+      );
+
+      if (
+        allowed.has('lights') &&
+        !filtered.some((item) => item.id === 'lights')
+      ) {
+        filtered.unshift({
+          id: 'lights',
+          quantity: nextProfile.defaultLightingQuantity,
+          hoursPerDay: SOLAR_APPLIANCES.lights.defaultHours,
+        });
+      }
+
+      return filtered;
+    });
+  };
+
+const toggleAppliance = (id: SolarApplianceId) => {
     setAppliances((current) => {
       if (current.some((item) => item.id === id)) return current.filter((item) => item.id !== id);
       const spec = SOLAR_APPLIANCES[id];
@@ -52,9 +102,60 @@ export default function SolarAssistantScreen() {
     setAppliances((current) => current.map((item) => item.id === id ? { ...item, quantity: Math.max(1, Math.min(12, item.quantity + delta)) } : item));
   };
 
-  const finish = () => navigation.navigate('SolarResult', {
-    answers: { propertyType, rooms, appliances, autonomyHours, monthlyBill },
-  });
+  const finish = () => {
+    const toNumber = (value: string) => {
+      const normalized = value.replace(',', '.').trim();
+
+      if (!normalized) return undefined;
+
+      const n = Number(normalized);
+
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    const projectDetails = {
+      ...(propertyType === 'home'
+        ? {
+            occupants,
+          }
+        : {}),
+
+      ...(propertyType === 'shop'
+        ? {
+            activity: activity.trim() || undefined,
+            openingHour: toNumber(openingHour),
+            closingHour: toNumber(closingHour),
+          }
+        : {}),
+
+      ...(propertyType === 'business'
+        ? {
+            activity: activity.trim() || undefined,
+            employees,
+            openingHour: toNumber(openingHour),
+            closingHour: toNumber(closingHour),
+          }
+        : {}),
+
+      ...(propertyType === 'farm'
+        ? {
+            dailyWaterM3: toNumber(dailyWaterM3),
+            pumpHeadM: toNumber(pumpHeadM),
+          }
+        : {}),
+    };
+
+    navigation.navigate('SolarResult', {
+      answers: {
+        propertyType,
+        rooms,
+        appliances,
+        autonomyHours,
+        monthlyBill,
+        projectDetails,
+      },
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -78,7 +179,7 @@ export default function SolarAssistantScreen() {
               {PROPERTY_TYPES.map((item) => {
                 const active = propertyType === item.id;
                 return (
-                  <TouchableOpacity key={item.id} style={[styles.typeCard, active && styles.typeCardActive]} onPress={() => setPropertyType(item.id)} activeOpacity={0.82}>
+                  <TouchableOpacity key={item.id} style={[styles.typeCard, active && styles.typeCardActive]} onPress={() => handlePropertyTypeChange(item.id)} activeOpacity={0.82}>
                     <Ionicons name={item.icon as any} size={30} color={active ? Colors.primary : Colors.secondary} />
                     <Text style={[styles.typeLabel, active && styles.typeLabelActive]}>{item.label}</Text>
                   </TouchableOpacity>

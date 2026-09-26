@@ -8,6 +8,7 @@ import CategoryProductsScreen from '../screens/categories/CategoryProductsScreen
 import SolarAssistantScreen from '../screens/energy/SolarAssistantScreen';
 import SolarResultScreen from '../screens/energy/SolarResultScreen';
 import { Colors } from '../constants/colors';
+import HeaderActions from '../components/common/HeaderActions';
 import { Category, Product } from '../types';
 import { SolarAnswers } from '../utils/solarEstimator';
 
@@ -24,12 +25,29 @@ const Stack = createNativeStackNavigator<HomeStackParamList>();
 export default function HomeStackNavigator() {
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: Colors.white },
         headerTintColor: Colors.text,
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
-      }}
+
+        headerRight: () => (
+          <HeaderActions
+            onNotifications={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'Notifications' }
+              )
+            }
+            onCart={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'CartArea' }
+              )
+            }
+          />
+        ),
+      })}
     >
       <Stack.Screen name="HomeMain" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SolarAssistant" component={SolarAssistantScreen} options={{ title: 'Assistant solaire' }} />

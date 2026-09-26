@@ -165,7 +165,7 @@ export default function RegisterScreen() {
           <View style={styles.iconWrap}><Ionicons name="person-add-outline" size={30} color={Colors.primary} /></View>
           <Text style={styles.eyebrow}>COMPTE ZIDA</Text>
           <Text style={styles.title}>Créer mon compte</Text>
-          <Text style={styles.subtitle}>Retrouvez vos commandes, installations et demandes SAV dans un seul espace sécurisé.</Text>
+          <Text style={styles.subtitle}>Retrouvez vos commandes, installations et demandes d'assistance dans un seul espace sécurisé.</Text>
         </View>
 
         <View style={styles.card}>

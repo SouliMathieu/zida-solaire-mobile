@@ -16,6 +16,7 @@ import RepairRequestV2Screen from '../screens/profile/RepairRequestV2Screen';
 import CartStackNavigator from './CartStackNavigator';
 import OrdersStackNavigator from './OrdersStackNavigator';
 import { Colors } from '../constants/colors';
+import HeaderActions from '../components/common/HeaderActions';
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -38,12 +39,29 @@ const Stack = createNativeStackNavigator<ProfileStackParamList>();
 export default function ProfileStackNavigator() {
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: Colors.white },
         headerTintColor: Colors.text,
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
-      }}
+
+        headerRight: () => (
+          <HeaderActions
+            onNotifications={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'Notifications' }
+              )
+            }
+            onCart={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'CartArea' }
+              )
+            }
+          />
+        ),
+      })}
     >
       <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Mon compte' }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Connexion' }} />
@@ -55,7 +73,7 @@ export default function ProfileStackNavigator() {
       <Stack.Screen name="Contact" component={ContactScreen} options={{ title: 'Contact' }} />
       <Stack.Screen name="Devis" component={DevisScreen} options={{ title: 'Demande de devis' }} />
       <Stack.Screen name="InstallationRequest" component={InstallationRequestScreen} options={{ title: "Demande d'installation" }} />
-      <Stack.Screen name="RepairRequest" component={RepairRequestV2Screen} options={{ title: 'Assistance / SAV' }} />
+      <Stack.Screen name="RepairRequest" component={RepairRequestV2Screen} options={{ title: 'Assistance' }} />
       <Stack.Screen name="CartArea" component={CartStackNavigator} options={{ title: 'Mon panier', headerShown: false }} />
       <Stack.Screen name="OrdersArea" component={OrdersStackNavigator} options={{ title: 'Mes commandes', headerShown: false }} />
     </Stack.Navigator>

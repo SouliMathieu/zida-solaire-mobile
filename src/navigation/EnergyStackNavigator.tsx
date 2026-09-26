@@ -6,6 +6,7 @@ import SolarResultScreen from '../screens/energy/SolarResultScreen';
 import InstallationsScreen, { CustomerInstallation } from '../screens/energy/InstallationsScreen';
 import InstallationDetailScreen from '../screens/energy/InstallationDetailScreen';
 import { Colors } from '../constants/colors';
+import HeaderActions from '../components/common/HeaderActions';
 import { SolarAnswers } from '../utils/solarEstimator';
 
 export type EnergyStackParamList = {
@@ -21,12 +22,29 @@ const Stack = createNativeStackNavigator<EnergyStackParamList>();
 export default function EnergyStackNavigator() {
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: Colors.white },
         headerTintColor: Colors.text,
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
-      }}
+
+        headerRight: () => (
+          <HeaderActions
+            onNotifications={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'Notifications' }
+              )
+            }
+            onCart={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'CartArea' }
+              )
+            }
+          />
+        ),
+      })}
     >
       <Stack.Screen name="EnergyHome" component={EnergyHomeScreen} options={{ title: 'Mon énergie' }} />
       <Stack.Screen name="SolarAssistant" component={SolarAssistantScreen} options={{ title: 'Assistant solaire' }} />

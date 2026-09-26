@@ -149,7 +149,7 @@ export default function ChangePhoneScreen() {
 
         <View style={styles.notice}>
           <Ionicons name="information-circle-outline" size={22} color={Colors.secondary} />
-          <Text style={styles.noticeText}>Après validation, vos commandes, installations et tickets SAV restent associés à votre compte.</Text>
+          <Text style={styles.noticeText}>Après validation, vos commandes, installations et demandes d'assistance restent associés à votre compte.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

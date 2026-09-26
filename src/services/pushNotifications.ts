@@ -22,7 +22,7 @@ async function ensureAndroidChannel() {
     name: 'Suivi ZIDA',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#FF6B35',
+    lightColor: '#063970',
     sound: 'default',
   });
 }

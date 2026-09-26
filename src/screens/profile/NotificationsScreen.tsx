@@ -8,7 +8,7 @@ import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotificationPr
 import { CustomerNotification, NotificationPreferences } from '../../services/api';
 import { disablePushNotifications, enablePushNotifications } from '../../services/pushNotifications';
 
-const ICONS: Record<string, string> = { order: 'receipt-outline', installation: 'construct-outline', sav: 'headset-outline', system: 'notifications-outline' };
+const ICONS: Record<string, string> = { order: 'receipt-outline', installation: 'construct-outline', sav: 'chatbubbles-outline', system: 'notifications-outline' };
 
 export default function NotificationsScreen() {
   const feed = useNotifications();
@@ -58,7 +58,7 @@ export default function NotificationsScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.eyebrow}>CENTRE D’ACTIVITÉ</Text>
           <Text style={styles.title}>Restez au courant</Text>
-          <Text style={styles.subtitle}>Commandes, installations et SAV au même endroit.</Text>
+          <Text style={styles.subtitle}>Commandes, installations et assistance au même endroit.</Text>
         </View>
         {unreadCount > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text></View>}
       </View>
@@ -74,7 +74,7 @@ export default function NotificationsScreen() {
         <View style={styles.emptyCard}>
           <Ionicons name="checkmark-circle-outline" size={36} color={Colors.success} />
           <Text style={styles.emptyTitle}>Tout est calme</Text>
-          <Text style={styles.emptyText}>Les prochains changements de commande, installation ou SAV apparaîtront ici.</Text>
+          <Text style={styles.emptyText}>Les prochains changements de commande, installation ou assistance apparaîtront ici.</Text>
         </View>
       ) : (
         <View style={styles.card}>
@@ -87,7 +87,7 @@ export default function NotificationsScreen() {
         <PreferenceRow icon="notifications-outline" title="Notifications push" subtitle="Recevoir les mises à jour même lorsque l’application est fermée" value={prefs.data?.pushEnabled ?? false} onValueChange={togglePush} disabled={pushBusy} />
         <PreferenceRow icon="receipt-outline" title="Commandes" subtitle="Confirmation, préparation, expédition et livraison" value={prefs.data?.orderUpdates ?? true} onValueChange={(v) => toggle('orderUpdates', v)} />
         <PreferenceRow icon="construct-outline" title="Installations" subtitle="Devis, planification et fin de chantier" value={prefs.data?.installationUpdates ?? true} onValueChange={(v) => toggle('installationUpdates', v)} />
-        <PreferenceRow icon="headset-outline" title="Assistance / SAV" subtitle="Prise en charge et clôture de vos tickets" value={prefs.data?.savUpdates ?? true} onValueChange={(v) => toggle('savUpdates', v)} />
+        <PreferenceRow icon="chatbubbles-outline" title="Assistance" subtitle="Prise en charge et clôture de vos tickets" value={prefs.data?.savUpdates ?? true} onValueChange={(v) => toggle('savUpdates', v)} />
         <PreferenceRow icon="bulb-outline" title="Conseils solaires" subtitle="Astuces utiles pour votre installation" value={prefs.data?.solarTips ?? true} onValueChange={(v) => toggle('solarTips', v)} />
         <PreferenceRow icon="pricetag-outline" title="Offres commerciales" subtitle="Promotions et offres ZIDA" value={prefs.data?.promotions ?? false} onValueChange={(v) => toggle('promotions', v)} last />
       </View>

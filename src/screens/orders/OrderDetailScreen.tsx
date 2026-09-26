@@ -97,7 +97,7 @@ export default function OrderDetailScreen() {
 
       <Section title="Besoin d’une modification ?">
         <TouchableOpacity style={styles.supportCard} onPress={goToSupport} activeOpacity={0.85}>
-          <View style={styles.supportIcon}><Ionicons name="headset-outline" size={24} color={Colors.primary} /></View>
+          <View style={styles.supportIcon}><Ionicons name="chatbubbles-outline" size={24} color={Colors.primary} /></View>
           <View style={{ flex: 1 }}>
             <Text style={styles.supportTitle}>Contacter ZIDA SOLAIRE</Text>
             <Text style={styles.supportText}>Pour une annulation, une modification d’adresse ou une question sur le statut de la commande.</Text>

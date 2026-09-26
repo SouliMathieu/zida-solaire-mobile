@@ -36,8 +36,8 @@ export default function SupportHomeScreen() {
       />
       <SupportCard
         icon="receipt-outline"
-        title="Mes tickets SAV"
-        text={authenticated ? 'Consultez les demandes liées à votre compte et leur statut.' : 'Connectez-vous pour suivre vos demandes SAV.'}
+        title="Mes demandes"
+        text={authenticated ? "Consultez les demandes liées à votre compte et leur statut." : "Connectez-vous pour suivre vos demandes d'assistance."}
         onPress={() => navigation.navigate('RepairTickets')}
       />
       <SupportCard
@@ -68,7 +68,7 @@ export default function SupportHomeScreen() {
         <Ionicons name="time-outline" size={23} color={Colors.secondary} />
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text style={styles.infoTitle}>Votre demande reste traçable</Text>
-          <Text style={styles.infoText}>Les tickets SAV et demandes d'installation envoyés depuis l'application sont enregistrés dans le même système que ceux du site ZIDA.</Text>
+          <Text style={styles.infoText}>Les demandes d'assistance et demandes d'installation envoyés depuis l'application sont enregistrés dans le même système que ceux du site ZIDA.</Text>
         </View>
       </View>
     </ScrollView>

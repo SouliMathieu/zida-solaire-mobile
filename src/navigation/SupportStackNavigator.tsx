@@ -8,6 +8,7 @@ import RepairTicketsScreen from '../screens/support/RepairTicketsScreen';
 import RepairTicketDetailScreen from '../screens/support/RepairTicketDetailScreen';
 import { RepairTicket } from '../hooks/useRepairs';
 import { Colors } from '../constants/colors';
+import HeaderActions from '../components/common/HeaderActions';
 
 export type SupportStackParamList = {
   SupportHome: undefined;
@@ -23,16 +24,33 @@ const Stack = createNativeStackNavigator<SupportStackParamList>();
 export default function SupportStackNavigator() {
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: Colors.white },
         headerTintColor: Colors.text,
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
-      }}
+
+        headerRight: () => (
+          <HeaderActions
+            onNotifications={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'Notifications' }
+              )
+            }
+            onCart={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'CartArea' }
+              )
+            }
+          />
+        ),
+      })}
     >
       <Stack.Screen name="SupportHome" component={SupportHomeScreen} options={{ title: 'Assistance' }} />
       <Stack.Screen name="RepairRequest" component={RepairRequestV2Screen} options={{ title: 'Signaler un problème' }} />
-      <Stack.Screen name="RepairTickets" component={RepairTicketsScreen} options={{ title: 'Mes tickets SAV' }} />
+      <Stack.Screen name="RepairTickets" component={RepairTicketsScreen} options={{ title: 'Mes demandes' }} />
       <Stack.Screen name="RepairTicketDetail" component={RepairTicketDetailScreen} options={{ title: 'Détail du ticket' }} />
       <Stack.Screen name="InstallationRequest" component={InstallationRequestScreen} options={{ title: "Demande d'installation" }} />
       <Stack.Screen name="Contact" component={ContactScreen} options={{ title: 'Nous contacter' }} />

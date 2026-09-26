@@ -13,40 +13,55 @@ type Props = {
 
 export default function QuickActionCard({ icon, label, onPress }: Props) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.82}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      activeOpacity={0.82}
+    >
       <View style={styles.iconWrap}>
-        <Ionicons name={icon as any} size={22} color={Colors.secondary} />
+        <Ionicons
+          name={icon as any}
+          size={26}
+          color={Colors.secondary}
+        />
       </View>
-      <Text style={styles.label}>{label}</Text>
+
+      <Text style={styles.label}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
+
   card: {
     width: '23%',
-    minHeight: 92,
+    minHeight: 108,
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.md,
     ...Shadow.card,
   },
+
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#EEF4FA',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFF1E8',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
+
   label: {
     fontSize: Typography.caption,
     color: Colors.text,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
   },
+
 });

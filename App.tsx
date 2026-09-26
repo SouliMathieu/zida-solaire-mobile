@@ -1,13 +1,14 @@
 // App.tsx
 
 import React, { useEffect, useRef } from 'react';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
+import { navigationRef } from './src/navigation/navigationRef';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,8 +18,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const navigationRef = createNavigationContainerRef<any>();
 
 type PushData = {
   route?: string;

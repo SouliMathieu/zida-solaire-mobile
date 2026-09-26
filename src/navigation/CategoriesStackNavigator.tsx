@@ -6,6 +6,7 @@ import CategoriesScreen from '../screens/categories/CategoriesScreen';
 import CategoryProductsScreen from '../screens/categories/CategoryProductsScreen';
 import ProductDetailScreen from '../screens/product/ProductDetailScreen';
 import { Colors } from '../constants/colors';
+import HeaderActions from '../components/common/HeaderActions';
 import { Category, Product } from '../types';
 
 export type CategoriesStackParamList = {
@@ -19,12 +20,29 @@ const Stack = createNativeStackNavigator<CategoriesStackParamList>();
 export default function CategoriesStackNavigator() {
   return (
     <Stack.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: Colors.white },
         headerTintColor: Colors.text,
         headerTitleStyle: { fontWeight: '800' },
         headerShadowVisible: false,
-      }}
+
+        headerRight: () => (
+          <HeaderActions
+            onNotifications={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'Notifications' }
+              )
+            }
+            onCart={() =>
+              (navigation.getParent() as any)?.navigate(
+                'Profil',
+                { screen: 'CartArea' }
+              )
+            }
+          />
+        ),
+      })}
     >
       <Stack.Screen name="CategoriesMain" component={CategoriesScreen} options={{ headerShown: false }} />
       <Stack.Screen

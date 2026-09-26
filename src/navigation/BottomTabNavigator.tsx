@@ -44,31 +44,52 @@ export default function BottomTabNavigator() {
         },
       }}
     >
+
       <Tab.Screen
         name="Accueil"
         component={HomeStackNavigator}
-        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, size }) =>
+            <Ionicons name="home-outline" size={size} color={color} />
+        }}
       />
+
       <Tab.Screen
-        name="Solutions"
+        name="Boutique"
         component={CategoriesStackNavigator}
-        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, size }) =>
+            <Ionicons name="storefront-outline" size={size} color={color} />
+        }}
       />
+
       <Tab.Screen
         name="Mon énergie"
         component={EnergyStackNavigator}
-        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="sunny-outline" size={size} color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, size }) =>
+            <Ionicons name="sunny-outline" size={size} color={color} />
+        }}
       />
+
       <Tab.Screen
         name="Assistance"
         component={SupportStackNavigator}
-        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="headset-outline" size={size} color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, size }) =>
+            <Ionicons name="chatbubbles-outline" size={size} color={color} />
+        }}
       />
+
       <Tab.Screen
-        name="Compte"
+        name="Profil"
         component={ProfileStackNavigator}
-        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, size }) =>
+            <Ionicons name="person-outline" size={size} color={color} />
+        }}
       />
+
     </Tab.Navigator>
   );
 }

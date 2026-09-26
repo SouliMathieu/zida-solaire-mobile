@@ -29,7 +29,7 @@ export default function RepairTicketsScreen() {
       <View style={styles.center}>
         <Ionicons name="lock-closed-outline" size={46} color={Colors.secondary} />
         <Text style={styles.emptyTitle}>Connexion requise</Text>
-        <Text style={styles.emptyText}>Connectez-vous pour retrouver les demandes SAV associées à votre numéro de téléphone.</Text>
+        <Text style={styles.emptyText}>Connectez-vous pour retrouver les demandes d'assistance associées à votre numéro de téléphone.</Text>
       </View>
     );
   }
@@ -47,7 +47,7 @@ export default function RepairTicketsScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[Colors.primary]} />}
         ListHeaderComponent={
           <View style={styles.headerCard}>
-            <Text style={styles.eyebrow}>SAV ZIDA</Text>
+            <Text style={styles.eyebrow}>Assistance ZIDA</Text>
             <Text style={styles.headerTitle}>Mes demandes d'assistance</Text>
             <Text style={styles.headerText}>Suivez ici les tickets enregistrés avec le numéro de votre compte.</Text>
           </View>
@@ -55,7 +55,7 @@ export default function RepairTicketsScreen() {
         ListEmptyComponent={
           <View style={styles.centerInline}>
             <Ionicons name="build-outline" size={48} color={Colors.gray} />
-            <Text style={styles.emptyTitle}>{error ? 'Historique indisponible' : 'Aucun ticket SAV'}</Text>
+            <Text style={styles.emptyTitle}>{error ? "Historique indisponible" : "Aucune demande d'assistance"}</Text>
             <Text style={styles.emptyText}>{error ? 'Le service client n’est pas encore accessible sur cette version du backend.' : 'Vos futures demandes apparaîtront ici.'}</Text>
             <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('RepairRequest')}>
               <Text style={styles.primaryText}>Signaler un problème</Text>

@@ -1,90 +1,190 @@
-// src/components/product/CategoryCard.tsx
-
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-// @ts-expect-error - Expo vector icons types issue
+import { useWindowDimensions } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  View,
+} from 'react-native';
+
+// @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
+
 import { Category } from '../../types';
 import { Colors } from '../../constants/colors';
+import { Radius, Shadow, Spacing } from '../../theme/tokens';
 
 interface CategoryCardProps {
   category: Category;
   onPress: () => void;
+  width?: number;
 }
 
-// Couleurs variées par catégorie
-const CATEGORY_COLORS: { [key: string]: [string, string] } = {
-  'panneaux-solaires': [Colors.accent, '#FCD34D'],
-  'batteries-stockage': [Colors.secondary, '#3B82F6'],
-  'onduleurs-regulateurs': [Colors.purple, '#A78BFA'],
-  'climatisation-électroménager': [Colors.teal, '#5EEAD4'],
-  'accessoires': [Colors.pink, '#F472B6'],
-  'default': [Colors.primary, Colors.accent],
+const normalize = (value: string = '') =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const getCategoryIcon = (category: Category) => {
+  const value = `${normalize(category.slug)} ${normalize(category.name)}`;
+
+  if (
+    value.includes('panneau') ||
+    value.includes('panel')
+  ) {
+    return 'sunny-outline';
+  }
+
+  if (
+    value.includes('batterie') ||
+    value.includes('stockage')
+  ) {
+    return 'battery-charging-outline';
+  }
+
+  if (
+    value.includes('onduleur') ||
+    value.includes('regulateur')
+  ) {
+    return 'flash-outline';
+  }
+
+  if (value.includes('kit')) {
+    return 'apps-outline';
+  }
+
+  if (
+    value.includes('pompage') ||
+    value.includes('forage')
+  ) {
+    return 'water-outline';
+  }
+
+  if (
+    value.includes('climatisation') ||
+    value.includes('electromenager')
+  ) {
+    return 'snow-outline';
+  }
+
+  if (value.includes('eclairage')) {
+    return 'bulb-outline';
+  }
+
+  if (value.includes('accessoire')) {
+    return 'construct-outline';
+  }
+
+  if (value.includes('television')) {
+    return 'tv-outline';
+  }
+
+  if (value.includes('congelateur')) {
+    return 'snow-outline';
+  }
+
+  if (
+    value.includes('equipement') ||
+    value.includes('electrique')
+  ) {
+    return 'hardware-chip-outline';
+  }
+
+  return 'grid-outline';
 };
 
-export default function CategoryCard({ category, onPress }: CategoryCardProps) {
-  const colors = CATEGORY_COLORS[category.slug] || CATEGORY_COLORS['default'];
+export default function CategoryCard({
+  category,
+  onPress,
+  width,
+}: CategoryCardProps) {
+  const { width: screenWidth } = useWindowDimensions();
+
+  const cardWidth =
+    width ??
+    Math.floor(
+      (screenWidth - Spacing.lg * 2 - Spacing.md) / 2
+    );
+  const icon = getCategoryIcon(category);
 
   return (
-    <TouchableOpacity 
-      style={styles.card} 
+    <TouchableOpacity
+      style={[styles.card, { width: cardWidth }]}
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.84}
+      accessibilityRole="button"
+      accessibilityLabel={`Voir ${category.name}`}
     >
-      <LinearGradient
-        colors={colors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+      <View style={styles.iconContainer}>
+        <Ionicons
+          name={icon as any}
+          size={27}
+          color={Colors.primary}
+        />
+      </View>
+
+      <Text
+        style={styles.name}
+        numberOfLines={2}
+        ellipsizeMode="tail"
       >
-        <View style={styles.content}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="grid" size={32} color={Colors.white} />
-          </View>
-          <Text style={styles.name} numberOfLines={2}>
-            {category.name}
-          </Text>
-        </View>
-      </LinearGradient>
+        {category.name}
+      </Text>
+
+      <View style={styles.arrow}>
+        <Ionicons
+          name="arrow-forward"
+          size={17}
+          color={Colors.secondary}
+        />
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 140,
-    height: 140,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  gradient: {
-    width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'space-between',
+    height: 104,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    paddingHorizontal: 6,
+    paddingVertical: Spacing.sm,
+    flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9EDF2',
+    ...Shadow.card,
   },
+
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF0E8',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 6,
   },
+
   name: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.white,
-    textAlign: 'center',
+    flex: 1,
+    color: Colors.text,
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: '800',
+    paddingRight: 24,
+  },
+
+  arrow: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F0F6FA',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

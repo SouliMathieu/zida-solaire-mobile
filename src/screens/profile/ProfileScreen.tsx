@@ -40,7 +40,7 @@ export default function ProfileScreen() {
         <View style={styles.guestActions}>
           <QuickRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''}`} onPress={() => navigation.navigate('CartArea')} />
           <QuickRow icon="document-text-outline" title="Demander un devis" subtitle="Recevez une proposition personnalisée" onPress={() => navigation.navigate('Devis')} />
-          <QuickRow icon="headset-outline" title="Assistance / SAV" subtitle="Signaler un problème technique" onPress={() => navigation.navigate('RepairRequest')} />
+          <QuickRow icon="chatbubbles-outline" title="Assistance" subtitle="Signaler un problème technique" onPress={() => navigation.navigate('RepairRequest')} />
         </View>
       </ScrollView>
     );
@@ -72,7 +72,7 @@ export default function ProfileScreen() {
         <MenuRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''} en attente`} onPress={() => navigation.navigate('CartArea')} />
         <MenuRow icon="document-text-outline" title="Demander un devis" subtitle="Obtenir une proposition personnalisée" onPress={() => navigation.navigate('Devis')} />
         <MenuRow icon="construct-outline" title="Demande d'installation" subtitle="Planifier un nouveau projet" onPress={() => navigation.navigate('InstallationRequest')} />
-        <MenuRow icon="headset-outline" title="Assistance / SAV" subtitle="Créer une demande de dépannage" onPress={() => navigation.navigate('RepairRequest')} last />
+        <MenuRow icon="chatbubbles-outline" title="Assistance" subtitle="Créer une demande de dépannage" onPress={() => navigation.navigate('RepairRequest')} last />
       </View>
 
       <Text style={styles.sectionTitle}>Mon compte</Text>

@@ -71,8 +71,26 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
             <Ionicons name={inStock ? 'checkmark-circle-outline' : 'close-circle-outline'} size={16} color={inStock ? Colors.success : Colors.error} />
             <Text style={styles.stockText}>{inStock ? `${product.stock} en stock` : 'Indisponible'}</Text>
           </View>
-          <TouchableOpacity style={[styles.cartButton, !inStock && styles.cartButtonDisabled]} onPress={handleAddToCart} disabled={!inStock}>
-            <Ionicons name={cartItem ? 'checkmark' : 'bag-add-outline'} size={19} color={Colors.white} />
+          <TouchableOpacity
+            style={[
+              styles.cartButton,
+              cartItem && styles.cartButtonAdded,
+              !inStock && styles.cartButtonDisabled,
+            ]}
+            onPress={handleAddToCart}
+            disabled={!inStock}
+            accessibilityRole="button"
+            accessibilityLabel={
+              cartItem
+                ? `Produit déjà ajouté au panier, quantité ${cartItem.quantity}`
+                : 'Ajouter au panier'
+            }
+          >
+            <Ionicons
+              name="cart-outline"
+              size={19}
+              color={Colors.white}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -108,5 +126,6 @@ const styles = StyleSheet.create({
   stockInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   stockText: { marginLeft: 4, color: Colors.textSecondary, fontSize: 10, fontWeight: '700' },
   cartButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  cartButtonAdded: { backgroundColor: Colors.secondary },
   cartButtonDisabled: { backgroundColor: '#B7C0C9' },
 });
