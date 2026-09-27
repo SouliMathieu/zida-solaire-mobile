@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput} from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -186,21 +186,226 @@ const toggleAppliance = (id: SolarApplianceId) => {
                 );
               })}
             </View>
-            <Text style={styles.title}>Combien de pièces ou chambres principales ?</Text>
-            <View style={styles.counter}>
-              <TouchableOpacity style={styles.counterButton} onPress={() => setRooms(Math.max(1, rooms - 1))}><Ionicons name="remove" size={22} color={Colors.secondary} /></TouchableOpacity>
-              <Text style={styles.counterValue}>{rooms}</Text>
-              <TouchableOpacity style={styles.counterButton} onPress={() => setRooms(Math.min(30, rooms + 1))}><Ionicons name="add" size={22} color={Colors.secondary} /></TouchableOpacity>
-            </View>
-          </>
-        )}
 
+            {propertyType === 'home' && (
+              <>
+                <Text style={styles.title}>
+                  Combien de pièces ou chambres principales ?
+                </Text>
+
+                <View style={styles.counter}>
+                  <TouchableOpacity
+                    style={styles.counterButton}
+                    onPress={() => setRooms(Math.max(1, rooms - 1))}
+                  >
+                    <Ionicons
+                      name="remove"
+                      size={22}
+                      color={Colors.secondary}
+                    />
+                  </TouchableOpacity>
+
+                  <Text style={styles.counterValue}>{rooms}</Text>
+
+                  <TouchableOpacity
+                    style={styles.counterButton}
+                    onPress={() => setRooms(Math.min(30, rooms + 1))}
+                  >
+                    <Ionicons
+                      name="add"
+                      size={22}
+                      color={Colors.secondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.fieldLabel}>
+                  Nombre d'occupants habituels
+                </Text>
+
+                <View style={styles.counter}>
+                  <TouchableOpacity
+                    style={styles.counterButton}
+                    onPress={() =>
+                      setOccupants(Math.max(1, occupants - 1))
+                    }
+                  >
+                    <Ionicons
+                      name="remove"
+                      size={22}
+                      color={Colors.secondary}
+                    />
+                  </TouchableOpacity>
+
+                  <Text style={styles.counterValue}>{occupants}</Text>
+
+                  <TouchableOpacity
+                    style={styles.counterButton}
+                    onPress={() =>
+                      setOccupants(Math.min(50, occupants + 1))
+                    }
+                  >
+                    <Ionicons
+                      name="add"
+                      size={22}
+                      color={Colors.secondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {(propertyType === 'shop' ||
+              propertyType === 'business') && (
+              <>
+                <Text style={styles.title}>
+                  {propertyType === 'shop'
+                    ? 'Votre activité commerciale'
+                    : 'Votre activité professionnelle'}
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  value={activity}
+                  onChangeText={setActivity}
+                  placeholder={
+                    propertyType === 'shop'
+                      ? 'Ex. alimentation, restaurant, boutique'
+                      : 'Ex. bureau, atelier, école'
+                  }
+                  placeholderTextColor={Colors.gray}
+                />
+
+                {propertyType === 'business' && (
+                  <>
+                    <Text style={styles.fieldLabel}>
+                      Nombre d'employés présents habituellement
+                    </Text>
+
+                    <View style={styles.counter}>
+                      <TouchableOpacity
+                        style={styles.counterButton}
+                        onPress={() =>
+                          setEmployees(Math.max(1, employees - 1))
+                        }
+                      >
+                        <Ionicons
+                          name="remove"
+                          size={22}
+                          color={Colors.secondary}
+                        />
+                      </TouchableOpacity>
+
+                      <Text style={styles.counterValue}>
+                        {employees}
+                      </Text>
+
+                      <TouchableOpacity
+                        style={styles.counterButton}
+                        onPress={() =>
+                          setEmployees(Math.min(500, employees + 1))
+                        }
+                      >
+                        <Ionicons
+                          name="add"
+                          size={22}
+                          color={Colors.secondary}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+                <Text style={styles.fieldLabel}>
+                  Horaires habituels
+                </Text>
+
+                <View style={styles.fieldRow}>
+                  <View style={styles.fieldHalf}>
+                    <Text style={styles.fieldLabel}>
+                      Ouverture
+                    </Text>
+
+                    <TextInput
+                      style={styles.input}
+                      value={openingHour}
+                      onChangeText={setOpeningHour}
+                      keyboardType="decimal-pad"
+                      placeholder="8"
+                      placeholderTextColor={Colors.gray}
+                    />
+                  </View>
+
+                  <View style={styles.fieldHalf}>
+                    <Text style={styles.fieldLabel}>
+                      Fermeture
+                    </Text>
+
+                    <TextInput
+                      style={styles.input}
+                      value={closingHour}
+                      onChangeText={setClosingHour}
+                      keyboardType="decimal-pad"
+                      placeholder="18"
+                      placeholderTextColor={Colors.gray}
+                    />
+                  </View>
+                </View>
+
+                <Text style={styles.helper}>
+                  Ces horaires serviront à estimer la durée quotidienne
+                  d'utilisation des équipements.
+                </Text>
+              </>
+            )}
+
+            {propertyType === 'farm' && (
+              <>
+                <Text style={styles.title}>
+                  Votre besoin agricole
+                </Text>
+
+                <Text style={styles.fieldLabel}>
+                  Volume d'eau souhaité par jour (m³)
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  value={dailyWaterM3}
+                  onChangeText={setDailyWaterM3}
+                  keyboardType="decimal-pad"
+                  placeholder="Ex. 20"
+                  placeholderTextColor={Colors.gray}
+                />
+
+                <Text style={styles.fieldLabel}>
+                  Hauteur de pompage (m)
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  value={pumpHeadM}
+                  onChangeText={setPumpHeadM}
+                  keyboardType="decimal-pad"
+                  placeholder="Ex. 30"
+                  placeholderTextColor={Colors.gray}
+                />
+
+                <Text style={styles.helper}>
+                  Ces deux valeurs serviront au dimensionnement du besoin
+                  de pompage et devront être confirmées sur site.
+                </Text>
+              </>
+            )}
+
+            </>
+          )}
         {step === 2 && (
           <>
             <Text style={styles.title}>Quels appareils voulez-vous alimenter ?</Text>
             <Text style={styles.helper}>Sélectionnez les équipements puis ajustez les quantités.</Text>
             <View style={styles.applianceList}>
-              {(Object.keys(SOLAR_APPLIANCES) as SolarApplianceId[]).map((id) => {
+              {profile.applianceIds.map((id) => {
                 const active = selectedIds.includes(id);
                 const selection = appliances.find((a) => a.id === id);
                 return (
@@ -281,6 +486,36 @@ const styles = StyleSheet.create({
   typeCardActive: { borderColor: Colors.primary, backgroundColor: '#FFF6F1' },
   typeLabel: { marginTop: Spacing.sm, color: Colors.text, fontWeight: '700' },
   typeLabelActive: { color: Colors.primary },
+
+  fieldLabel: {
+    color: Colors.text,
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 7,
+    marginTop: Spacing.sm,
+  },
+
+  input: {
+    minHeight: 50,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: '#E5EAF0',
+    paddingHorizontal: 14,
+    color: Colors.text,
+    fontSize: 15,
+    marginBottom: Spacing.md,
+  },
+
+  fieldRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  fieldHalf: {
+    width: '48%',
+  },
+
   counter: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: Radius.md, marginBottom: Spacing.xl, ...Shadow.card },
   counterButton: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   counterValue: { minWidth: 70, textAlign: 'center', fontSize: Typography.h2, color: Colors.text, fontWeight: '900' },
