@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput} from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -29,8 +29,8 @@ const APPLIANCE_ICONS: Record<SolarApplianceId, string> = {
   fan: 'sync-outline', computer: 'laptop-outline', ac: 'thermometer-outline', pump: 'water-outline',
 };
 
-const BILL_OPTIONS = ['< 10 000 FCFA', '10 000 – 25 000 FCFA', '25 000 – 50 000 FCFA', '50 000 – 100 000 FCFA', '> 100 000 FCFA'];
-const AUTONOMY_OPTIONS = [4, 8, 12, 24];
+const BILL_OPTIONS = ['Je ne sais pas', '< 10 000 FCFA', '10 000 – 25 000 FCFA', '25 000 – 50 000 FCFA', '50 000 – 100 000 FCFA', '> 100 000 FCFA'];
+const AUTONOMY_OPTIONS = [4, 6, 8, 12, 24];
 
 export default function SolarAssistantScreen() {
   const navigation = useNavigation<Nav>();
@@ -49,7 +49,8 @@ export default function SolarAssistantScreen() {
     { id: 'tv', quantity: 1, hoursPerDay: 5 },
   ]);
   const [autonomyHours, setAutonomyHours] = useState(8);
-   const [monthlyBill, setMonthlyBill] = useState('25 000 – 50 000 FCFA');
+  const [backupIds, setBackupIds] = useState<SolarApplianceId[]>([]);
+   const [monthlyBill, setMonthlyBill] = useState('Je ne sais pas');
 
 
   const profile = useMemo(
@@ -61,6 +62,46 @@ export default function SolarAssistantScreen() {
     () => appliances.map((a) => a.id),
     [appliances],
   );
+
+  useEffect(() => {
+    if (propertyType !== 'home') return;
+
+    const minimumLights = Math.max(
+      rooms * 2,
+      profile.defaultLightingQuantity,
+    );
+
+    setAppliances((current) => {
+      const existing = current.find(
+        (item) => item.id === 'lights',
+      );
+
+      if (!existing) {
+        return [
+          {
+            id: 'lights',
+            quantity: minimumLights,
+            hoursPerDay: SOLAR_APPLIANCES.lights.defaultHours,
+          },
+          ...current,
+        ];
+      }
+
+      if (existing.quantity >= minimumLights) {
+        return current;
+      }
+
+      return current.map((item) =>
+        item.id === 'lights'
+          ? { ...item, quantity: minimumLights }
+          : item,
+      );
+    });
+  }, [
+    propertyType,
+    rooms,
+    profile.defaultLightingQuantity,
+  ]);
 
   const handlePropertyTypeChange = (nextType: SolarPropertyType) => {
     const nextProfile = getSolarProjectProfile(nextType);
@@ -94,15 +135,126 @@ const toggleAppliance = (id: SolarApplianceId) => {
     setAppliances((current) => {
       if (current.some((item) => item.id === id)) return current.filter((item) => item.id !== id);
       const spec = SOLAR_APPLIANCES[id];
-      return [...current, { id, quantity: 1, hoursPerDay: spec.defaultHours }];
+
+      const quantity =
+        id === 'lights'
+          ? propertyType === 'home'
+            ? Math.max(
+                rooms * 2,
+                profile.defaultLightingQuantity,
+              )
+            : profile.defaultLightingQuantity
+          : 1;
+
+      return [
+        ...current,
+        {
+          id,
+          quantity,
+          hoursPerDay: spec.defaultHours,
+        },
+      ];
     });
   };
 
-  const changeQuantity = (id: SolarApplianceId, delta: number) => {
-    setAppliances((current) => current.map((item) => item.id === id ? { ...item, quantity: Math.max(1, Math.min(12, item.quantity + delta)) } : item));
+  const getMinimumQuantity = (id: SolarApplianceId) => {
+    if (id !== 'lights') return 1;
+
+    if (propertyType === 'home') {
+      return Math.max(
+        rooms * 2,
+        profile.defaultLightingQuantity,
+      );
+    }
+
+    return profile.defaultLightingQuantity;
+  };
+
+  const changeQuantity = (
+    id: SolarApplianceId,
+    delta: number,
+  ) => {
+    setAppliances((current) =>
+      current.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: Math.max(
+                getMinimumQuantity(id),
+                Math.min(99, item.quantity + delta),
+              ),
+            }
+          : item,
+      ),
+    );
+  };
+
+  const changeHoursPerDay = (
+    id: SolarApplianceId,
+    delta: number,
+  ) => {
+    setAppliances((current) =>
+      current.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              hoursPerDay: Math.max(
+                1,
+                Math.min(24, item.hoursPerDay + delta),
+              ),
+            }
+          : item,
+      ),
+    );
+  };
+
+  const toggleBackup = (id: SolarApplianceId) => {
+    setBackupIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  };
+
+  const goNext = () => {
+    if (step === 2) {
+      const selected = new Set(
+        appliances.map((item) => item.id),
+      );
+
+      setBackupIds((current) => {
+        const stillSelected = current.filter((id) =>
+          selected.has(id),
+        );
+
+        if (stillSelected.length) {
+          return stillSelected;
+        }
+
+        return appliances
+          .filter(
+            (item) =>
+              SOLAR_APPLIANCES[item.id].criticalDefault,
+          )
+          .map((item) => item.id);
+      });
+    }
+
+    setStep((current) => Math.min(3, current + 1));
   };
 
   const finish = () => {
+    const backupAppliances = appliances.filter(
+      (item) => backupIds.includes(item.id),
+    );
+
+    if (!backupAppliances.length) {
+      Alert.alert(
+        'Choisissez au moins un appareil',
+        'Indiquez les appareils que vous voulez garder en marche pendant une coupure.',
+      );
+      return;
+    }
     const toNumber = (value: string) => {
       const normalized = value.replace(',', '.').trim();
 
@@ -150,6 +302,7 @@ const toggleAppliance = (id: SolarApplianceId) => {
         propertyType,
         rooms,
         appliances,
+        backupAppliances,
         autonomyHours,
         monthlyBill,
         projectDetails,
@@ -353,8 +506,8 @@ const toggleAppliance = (id: SolarApplianceId) => {
                 </View>
 
                 <Text style={styles.helper}>
-                  Ces horaires serviront à estimer la durée quotidienne
-                  d'utilisation des équipements.
+                  Ces horaires nous aident à savoir à quel moment
+                  vos appareils sont utilisés dans la journée.
                 </Text>
               </>
             )}
@@ -392,8 +545,8 @@ const toggleAppliance = (id: SolarApplianceId) => {
                 />
 
                 <Text style={styles.helper}>
-                  Ces deux valeurs serviront au dimensionnement du besoin
-                  de pompage et devront être confirmées sur site.
+                  Ces informations nous aident à estimer la solution
+                  adaptée au pompage. Elles seront vérifiées sur place.
                 </Text>
               </>
             )}
@@ -402,56 +555,294 @@ const toggleAppliance = (id: SolarApplianceId) => {
           )}
         {step === 2 && (
           <>
-            <Text style={styles.title}>Quels appareils voulez-vous alimenter ?</Text>
-            <Text style={styles.helper}>Sélectionnez les équipements puis ajustez les quantités.</Text>
+            <Text style={styles.title}>
+              Quels appareils voulez-vous alimenter ?
+            </Text>
+
+            <Text style={styles.helper}>
+              Choisissez vos appareils, leur quantité et leur temps
+              d'utilisation habituel par jour.
+            </Text>
+
             <View style={styles.applianceList}>
               {profile.applianceIds.map((id) => {
                 const active = selectedIds.includes(id);
-                const selection = appliances.find((a) => a.id === id);
+                const selection = appliances.find(
+                  (item) => item.id === id,
+                );
+
+                const continuous =
+                  id === 'fridge' || id === 'freezer';
+
                 return (
-                  <View key={id} style={styles.applianceRow}>
-                    <TouchableOpacity style={styles.applianceMain} onPress={() => toggleAppliance(id)}>
-                      <View style={[styles.checkbox, active && styles.checkboxActive]}>{active && <Ionicons name="checkmark" size={14} color={Colors.white} />}</View>
-                      <Ionicons name={APPLIANCE_ICONS[id] as any} size={20} color={Colors.secondary} />
-                      <Text style={styles.applianceLabel}>{SOLAR_APPLIANCES[id].label}</Text>
-                    </TouchableOpacity>
+                  <View key={id} style={styles.applianceBlock}>
+                    <View style={styles.applianceRow}>
+                      <TouchableOpacity
+                        style={styles.applianceMain}
+                        onPress={() => toggleAppliance(id)}
+                      >
+                        <View
+                          style={[
+                            styles.checkbox,
+                            active && styles.checkboxActive,
+                          ]}
+                        >
+                          {active && (
+                            <Ionicons
+                              name="checkmark"
+                              size={14}
+                              color={Colors.white}
+                            />
+                          )}
+                        </View>
+
+                        <Ionicons
+                          name={APPLIANCE_ICONS[id] as any}
+                          size={20}
+                          color={Colors.secondary}
+                        />
+
+                        <Text style={styles.applianceLabel}>
+                          {SOLAR_APPLIANCES[id].label}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {active && selection && (
+                        <View style={styles.miniCounter}>
+                          <TouchableOpacity
+                            onPress={() =>
+                              changeQuantity(id, -1)
+                            }
+                          >
+                            <Ionicons
+                              name="remove-circle-outline"
+                              size={22}
+                              color={Colors.secondary}
+                            />
+                          </TouchableOpacity>
+
+                          <Text style={styles.qty}>
+                            {selection.quantity}
+                          </Text>
+
+                          <TouchableOpacity
+                            onPress={() =>
+                              changeQuantity(id, 1)
+                            }
+                          >
+                            <Ionicons
+                              name="add-circle-outline"
+                              size={22}
+                              color={Colors.primary}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+
                     {active && selection && (
-                      <View style={styles.miniCounter}>
-                        <TouchableOpacity onPress={() => changeQuantity(id, -1)}><Ionicons name="remove-circle-outline" size={22} color={Colors.secondary} /></TouchableOpacity>
-                        <Text style={styles.qty}>{selection.quantity}</Text>
-                        <TouchableOpacity onPress={() => changeQuantity(id, 1)}><Ionicons name="add-circle-outline" size={22} color={Colors.primary} /></TouchableOpacity>
+                      <View style={styles.usageRow}>
+                        <Text style={styles.usageLabel}>
+                          Utilisation
+                        </Text>
+
+                        {continuous ? (
+                          <Text style={styles.usageValue}>
+                            En continu
+                          </Text>
+                        ) : (
+                          <View style={styles.usageCounter}>
+                            <TouchableOpacity
+                              onPress={() =>
+                                changeHoursPerDay(id, -1)
+                              }
+                            >
+                              <Ionicons
+                                name="remove-circle-outline"
+                                size={20}
+                                color={Colors.secondary}
+                              />
+                            </TouchableOpacity>
+
+                            <Text style={styles.usageValue}>
+                              {selection.hoursPerDay} h/jour
+                            </Text>
+
+                            <TouchableOpacity
+                              onPress={() =>
+                                changeHoursPerDay(id, 1)
+                              }
+                            >
+                              <Ionicons
+                                name="add-circle-outline"
+                                size={20}
+                                color={Colors.primary}
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
                     )}
                   </View>
                 );
               })}
             </View>
+
+            {propertyType === 'home' && (
+              <Text style={styles.simpleNote}>
+                Pour {rooms} pièce{rooms > 1 ? 's' : ''}, nous prévoyons
+                au moins {Math.max(
+                  rooms * 2,
+                  profile.defaultLightingQuantity,
+                )} points d'éclairage.
+              </Text>
+            )}
           </>
         )}
 
         {step === 3 && (
           <>
-            <Text style={styles.title}>Combien d'heures d'autonomie souhaitez-vous ?</Text>
+            <Text style={styles.title}>
+              En cas de coupure, quels appareils voulez-vous garder en marche ?
+            </Text>
+
+            <Text style={styles.helper}>
+              Choisissez seulement les appareils les plus importants pour vous.
+            </Text>
+
+            <View style={styles.backupList}>
+              {appliances.map((item) => {
+                const active = backupIds.includes(item.id);
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.backupOption,
+                      active && styles.backupOptionActive,
+                    ]}
+                    onPress={() => toggleBackup(item.id)}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        active && styles.checkboxActive,
+                      ]}
+                    >
+                      {active && (
+                        <Ionicons
+                          name="checkmark"
+                          size={14}
+                          color={Colors.white}
+                        />
+                      )}
+                    </View>
+
+                    <Ionicons
+                      name={APPLIANCE_ICONS[item.id] as any}
+                      size={20}
+                      color={Colors.secondary}
+                    />
+
+                    <Text style={styles.backupLabel}>
+                      {SOLAR_APPLIANCES[item.id].label}
+                    </Text>
+
+                    <Text style={styles.backupQty}>
+                      × {item.quantity}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={styles.title}>
+              Pendant combien de temps voulez-vous garder ces appareils
+              en marche ?
+            </Text>
+
             <View style={styles.optionGrid}>
               {AUTONOMY_OPTIONS.map((hours) => (
-                <TouchableOpacity key={hours} style={[styles.optionCard, autonomyHours === hours && styles.optionCardActive]} onPress={() => setAutonomyHours(hours)}>
-                  <Text style={[styles.optionValue, autonomyHours === hours && styles.optionValueActive]}>{hours} h</Text>
-                  <Text style={styles.optionHint}>{hours === 24 ? 'journée complète' : 'hors réseau'}</Text>
+                <TouchableOpacity
+                  key={hours}
+                  style={[
+                    styles.optionCard,
+                    autonomyHours === hours &&
+                      styles.optionCardActive,
+                  ]}
+                  onPress={() => setAutonomyHours(hours)}
+                >
+                  <Text
+                    style={[
+                      styles.optionValue,
+                      autonomyHours === hours &&
+                        styles.optionValueActive,
+                    ]}
+                  >
+                    {hours} h
+                  </Text>
+
+                  <Text style={styles.optionHint}>
+                    {hours === 24
+                      ? 'une journée complète'
+                      : 'en cas de coupure'}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.title}>Votre facture d'électricité mensuelle ?</Text>
+
+            <Text style={styles.title}>
+              Votre facture d'électricité mensuelle
+            </Text>
+
+            <Text style={styles.helper}>
+              Facultatif. Cette information aide ZIDA à mieux comprendre
+              votre consommation.
+            </Text>
+
             <View style={styles.billList}>
               {BILL_OPTIONS.map((bill) => (
-                <TouchableOpacity key={bill} style={[styles.billOption, monthlyBill === bill && styles.billOptionActive]} onPress={() => setMonthlyBill(bill)}>
-                  <Ionicons name={monthlyBill === bill ? 'radio-button-on' : 'radio-button-off'} size={20} color={monthlyBill === bill ? Colors.primary : Colors.gray} />
-                  <Text style={styles.billText}>{bill}</Text>
+                <TouchableOpacity
+                  key={bill}
+                  style={[
+                    styles.billOption,
+                    monthlyBill === bill &&
+                      styles.billOptionActive,
+                  ]}
+                  onPress={() => setMonthlyBill(bill)}
+                >
+                  <Ionicons
+                    name={
+                      monthlyBill === bill
+                        ? 'radio-button-on'
+                        : 'radio-button-off'
+                    }
+                    size={20}
+                    color={
+                      monthlyBill === bill
+                        ? Colors.primary
+                        : Colors.gray
+                    }
+                  />
+
+                  <Text style={styles.billText}>
+                    {bill}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
+
             <View style={styles.infoCard}>
-              <Ionicons name="information-circle" size={22} color={Colors.info} />
-              <Text style={styles.infoText}>Le résultat reste une estimation indicative. Un technicien ZIDA validera le dimensionnement final sur site.</Text>
+              <Ionicons
+                name="information-circle"
+                size={22}
+                color={Colors.info}
+              />
+
+              <Text style={styles.infoText}>
+                Cette estimation vous donne une première idée de la
+                solution adaptée. L'équipe ZIDA confirmera le choix final.
+              </Text>
             </View>
           </>
         )}
@@ -459,7 +850,7 @@ const toggleAppliance = (id: SolarApplianceId) => {
 
       <View style={styles.footer}>
         {step > 1 && <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(step - 1)}><Text style={styles.secondaryText}>Retour</Text></TouchableOpacity>}
-        <TouchableOpacity style={styles.primaryButton} onPress={() => step < 3 ? setStep(step + 1) : finish()} activeOpacity={0.86}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => step < 3 ? goNext() : finish()} activeOpacity={0.86}>
           <Text style={styles.primaryButtonText}>{step < 3 ? 'Continuer' : 'Voir ma recommandation'}</Text>
           <Ionicons name="arrow-forward" size={19} color={Colors.white} />
         </TouchableOpacity>
@@ -520,13 +911,24 @@ const styles = StyleSheet.create({
   counterButton: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   counterValue: { minWidth: 70, textAlign: 'center', fontSize: Typography.h2, color: Colors.text, fontWeight: '900' },
   applianceList: { backgroundColor: Colors.white, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
-  applianceRow: { minHeight: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, borderBottomWidth: 1, borderBottomColor: '#EEF1F4' },
+  applianceBlock: { borderBottomWidth: 1, borderBottomColor: '#EEF1F4' },
+  applianceRow: { minHeight: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg },
   applianceMain: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: '#C8D0DA', alignItems: 'center', justifyContent: 'center', marginRight: Spacing.md },
   checkboxActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   applianceLabel: { flex: 1, marginLeft: Spacing.md, fontSize: Typography.body, color: Colors.text, fontWeight: '600' },
   miniCounter: { flexDirection: 'row', alignItems: 'center' },
   qty: { minWidth: 30, textAlign: 'center', fontWeight: '800', color: Colors.text },
+  usageRow: { minHeight: 44, paddingHorizontal: Spacing.lg, paddingLeft: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FAFBFC' },
+  usageLabel: { color: Colors.textSecondary, fontSize: 13 },
+  usageCounter: { flexDirection: 'row', alignItems: 'center' },
+  usageValue: { color: Colors.text, fontWeight: '800', marginHorizontal: 10 },
+  simpleNote: { color: Colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: Spacing.md },
+  backupList: { backgroundColor: Colors.white, borderRadius: Radius.lg, overflow: 'hidden', marginBottom: Spacing.xl, ...Shadow.card },
+  backupOption: { minHeight: 58, flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, borderBottomWidth: 1, borderBottomColor: '#EEF1F4' },
+  backupOptionActive: { backgroundColor: '#FFF9F5' },
+  backupLabel: { flex: 1, marginLeft: Spacing.md, color: Colors.text, fontWeight: '700' },
+  backupQty: { color: Colors.textSecondary, fontWeight: '700' },
   optionGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: Spacing.xl },
   optionCard: { width: '48%', backgroundColor: Colors.white, borderRadius: Radius.md, padding: Spacing.lg, marginBottom: Spacing.md, borderWidth: 1.5, borderColor: '#E5EAF0', ...Shadow.card },
   optionCardActive: { borderColor: Colors.primary, backgroundColor: '#FFF6F1' },
