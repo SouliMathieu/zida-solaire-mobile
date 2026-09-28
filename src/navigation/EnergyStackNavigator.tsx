@@ -46,8 +46,8 @@ export default function EnergyStackNavigator() {
         ),
       })}
     >
-      <Stack.Screen name="EnergyHome" component={EnergyHomeScreen} options={{ title: 'Mon énergie' }} />
-      <Stack.Screen name="SolarAssistant" component={SolarAssistantScreen} options={{ title: 'Assistant solaire' }} />
+      <Stack.Screen name="EnergyHome" component={EnergyHomeScreen} options={{ title: 'Simulateur solaire' }} />
+      <Stack.Screen name="SolarAssistant" component={SolarAssistantScreen} options={{ title: 'Simulateur solaire' }} />
       <Stack.Screen name="SolarResult" component={SolarResultScreen} options={{ title: 'Votre solution' }} />
       <Stack.Screen name="Installations" component={InstallationsScreen} options={{ title: 'Mes installations' }} />
       <Stack.Screen name="InstallationDetail" component={InstallationDetailScreen} options={{ title: 'Suivi du projet' }} />

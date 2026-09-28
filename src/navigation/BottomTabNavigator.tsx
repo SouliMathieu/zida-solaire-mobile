@@ -64,7 +64,7 @@ export default function BottomTabNavigator() {
       />
 
       <Tab.Screen
-        name="Mon énergie"
+        name="Simulateur"
         component={EnergyStackNavigator}
         options={{
           tabBarIcon: ({ color, size }) =>

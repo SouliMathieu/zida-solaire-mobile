@@ -151,9 +151,9 @@ export default function HomeScreen() {
     },
     {
       icon: 'calculator-outline',
-      label: 'Estimer mes besoins',
+      label: 'Simulateur solaire',
       onPress: () =>
-        goToTab('Mon énergie', 'SolarAssistant'),
+        goToTab('Simulateur'),
     },
     {
       icon: 'home-outline',
@@ -340,9 +340,9 @@ export default function HomeScreen() {
         style={styles.estimationCard}
         activeOpacity={0.86}
         accessibilityRole="button"
-        accessibilityLabel="Estimer mes besoins solaires"
+        accessibilityLabel="Ouvrir le simulateur solaire"
         onPress={() =>
-          goToTab('Mon énergie', 'SolarAssistant')
+          goToTab('Simulateur')
         }
       >
         <View style={styles.estimationIcon}>
@@ -355,12 +355,12 @@ export default function HomeScreen() {
 
         <View style={styles.estimationCopy}>
           <Text style={styles.estimationTitle}>
-            Estimez vos besoins solaires
+            Simulateur solaire
           </Text>
 
           <Text style={styles.estimationText}>
-            Répondez à quelques questions pour trouver une solution adaptée à
-            votre situation.
+            Découvrez le matériel solaire adapté à vos appareils et à
+            vos besoins en quelques étapes.
           </Text>
         </View>
 

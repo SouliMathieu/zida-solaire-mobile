@@ -1,114 +1,409 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
-import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
-import { useUserStore } from '../../store/userStore';
+import {
+  Radius,
+  Shadow,
+  Spacing,
+  Typography,
+} from '../../theme/tokens';
 import { EnergyStackParamList } from '../../navigation/EnergyStackNavigator';
 
-type Nav = NativeStackNavigationProp<EnergyStackParamList, 'EnergyHome'>;
+type Nav = NativeStackNavigationProp<
+  EnergyStackParamList,
+  'EnergyHome'
+>;
 
 export default function EnergyHomeScreen() {
   const navigation = useNavigation<Nav>();
-  const { isAuthenticated } = useUserStore();
-  const authenticated = isAuthenticated();
-
-  const goToAccount = () => {
-    // @ts-ignore nested tab navigation
-    navigation.getParent()?.navigate('Compte');
-  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <Ionicons name="sunny" size={30} color={Colors.primary} />
+          <Ionicons
+            name="sunny"
+            size={32}
+            color={Colors.primary}
+          />
         </View>
-        <Text style={styles.eyebrow}>MON ÉNERGIE</Text>
-        <Text style={styles.title}>Comprenez vos besoins et suivez vos projets</Text>
-        <Text style={styles.subtitle}>
-          Estimez votre système solaire, transmettez votre étude à ZIDA et suivez l'avancement de vos installations depuis un seul espace.
+
+        <Text style={styles.eyebrow}>
+          SIMULATEUR SOLAIRE
         </Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('SolarAssistant')} activeOpacity={0.86}>
-          <Text style={styles.primaryText}>Estimer mes besoins</Text>
-          <Ionicons name="arrow-forward" size={18} color={Colors.white} />
+
+        <Text style={styles.title}>
+          Trouvez la solution solaire adaptée à vos besoins
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Répondez à quelques questions sur vos appareils et vos
+          habitudes. Nous vous donnerons une première estimation
+          du matériel nécessaire.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() =>
+            navigation.navigate('SolarAssistant')
+          }
+          activeOpacity={0.86}
+        >
+          <Text style={styles.primaryText}>
+            Commencer mon estimation
+          </Text>
+
+          <Ionicons
+            name="arrow-forward"
+            size={19}
+            color={Colors.white}
+          />
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>Vos outils énergie</Text>
-      <View style={styles.grid}>
-        <ActionCard icon="calculator-outline" title="Assistant solaire" text="Dimensionnez une première solution selon vos usages." onPress={() => navigation.navigate('SolarAssistant')} />
-        <ActionCard icon="home-outline" title="Mes installations" text="Suivez vos demandes, rendez-vous et travaux ZIDA." onPress={() => authenticated ? navigation.navigate('Installations') : goToAccount()} />
+      <Text style={styles.sectionTitle}>
+        Comment ça marche ?
+      </Text>
+
+      <View style={styles.stepsCard}>
+        <Step
+          number="1"
+          title="Indiquez votre besoin"
+          text="Maison, commerce, entreprise ou activité agricole."
+        />
+
+        <Step
+          number="2"
+          title="Choisissez vos appareils"
+          text="Précisez ce que vous utilisez et pendant combien de temps."
+        />
+
+        <Step
+          number="3"
+          title="Découvrez votre estimation"
+          text="Voyez le matériel conseillé et les solutions ZIDA disponibles."
+          last
+        />
       </View>
 
-      <TouchableOpacity
-        style={styles.projectCard}
-        onPress={() => authenticated ? navigation.navigate('Installations') : goToAccount()}
-        activeOpacity={0.84}
-      >
-        <View style={styles.projectHeader}>
-          <View style={styles.projectIcon}>
-            <Ionicons name="pulse-outline" size={24} color={Colors.secondary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.projectTitle}>{authenticated ? 'Suivre mes projets ZIDA' : 'Retrouver mes projets'}</Text>
-            <Text style={styles.projectText}>
-              {authenticated
-                ? 'Consultez l’étape actuelle, les rendez-vous, le devis et les informations communiquées par l’équipe ZIDA.'
-                : 'Connectez-vous pour retrouver vos demandes et installations associées à votre numéro de téléphone.'}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
-        </View>
-      </TouchableOpacity>
+      <View style={styles.simulatorImageCard}>
+        <Image
+          source={require('../../../assets/images/simulateur_image.png')}
+          style={styles.simulatorImage}
+          resizeMode="contain"
+        />
 
-      <View style={styles.tipCard}>
-        <Ionicons name="shield-checkmark-outline" size={25} color={Colors.success} />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.tipTitle}>Une estimation reste indicative</Text>
-          <Text style={styles.tipText}>Le dimensionnement final dépend d'une étude du site, de vos usages réels et du matériel disponible chez ZIDA.</Text>
-        </View>
+        <Text style={styles.simulatorImageCaption}>
+          Voici simplement comment l'énergie passe du soleil
+          jusqu'à vos appareils.
+        </Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>
+        Ce que vous obtenez
+      </Text>
+
+      <View style={styles.benefitsCard}>
+        <Benefit text="Le nombre de panneaux solaires conseillé" />
+        <Benefit text="La batterie et l'onduleur adaptés à votre besoin" />
+        <Benefit text="Les prix ZIDA lorsqu'ils sont disponibles" />
+        <Benefit
+          text="Une estimation que vous pouvez enregistrer"
+          last
+        />
+      </View>
+
+      <View style={styles.infoCard}>
+        <Ionicons
+          name="information-circle-outline"
+          size={24}
+          color={Colors.secondary}
+        />
+
+        <Text style={styles.infoText}>
+          Cette estimation est gratuite et ne vous engage pas.
+          L'équipe ZIDA pourra ensuite confirmer avec vous la
+          solution la plus adaptée.
+        </Text>
       </View>
     </ScrollView>
   );
 }
 
-function ActionCard({ icon, title, text, onPress }: { icon: string; title: string; text: string; onPress: () => void }) {
+function Step({
+  number,
+  title,
+  text,
+  last,
+}: {
+  number: string;
+  title: string;
+  text: string;
+  last?: boolean;
+}) {
   return (
-    <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.82}>
-      <View style={styles.actionIcon}><Ionicons name={icon as any} size={24} color={Colors.primary} /></View>
-      <Text style={styles.actionTitle}>{title}</Text>
-      <Text style={styles.actionText}>{text}</Text>
-      <Ionicons name="arrow-forward" size={18} color={Colors.secondary} style={{ marginTop: 12 }} />
-    </TouchableOpacity>
+    <View
+      style={[
+        styles.stepRow,
+        last && styles.stepRowLast,
+      ]}
+    >
+      <View style={styles.stepNumber}>
+        <Text style={styles.stepNumberText}>
+          {number}
+        </Text>
+      </View>
+
+      <View style={styles.stepContent}>
+        <Text style={styles.stepTitle}>
+          {title}
+        </Text>
+
+        <Text style={styles.stepText}>
+          {text}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function Benefit({
+  text,
+  last,
+}: {
+  text: string;
+  last?: boolean;
+}) {
+  return (
+    <View
+      style={[
+        styles.benefitRow,
+        last && styles.benefitRowLast,
+      ]}
+    >
+      <Ionicons
+        name="checkmark-circle"
+        size={22}
+        color={Colors.success}
+      />
+
+      <Text style={styles.benefitText}>
+        {text}
+      </Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F8FB' },
-  content: { padding: Spacing.lg, paddingBottom: 120 },
-  hero: { backgroundColor: '#0A365D', borderRadius: Radius.xl, padding: Spacing.xl, ...Shadow.card },
-  heroIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
-  eyebrow: { color: '#BFD6E8', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-  title: { color: Colors.white, fontSize: Typography.h1, lineHeight: 31, fontWeight: '900', marginTop: 7 },
-  subtitle: { color: '#DFEAF2', lineHeight: 21, marginTop: 10 },
-  primaryButton: { height: 52, borderRadius: Radius.md, backgroundColor: Colors.primary, marginTop: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: Colors.white, fontWeight: '900', marginRight: 8 },
-  sectionTitle: { fontSize: Typography.h2, fontWeight: '900', color: Colors.text, marginTop: 28, marginBottom: 14 },
-  grid: { flexDirection: 'row', justifyContent: 'space-between' },
-  actionCard: { width: '48%', backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, ...Shadow.card },
-  actionIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF3EC', alignItems: 'center', justifyContent: 'center' },
-  actionTitle: { fontSize: 15, fontWeight: '900', color: Colors.text, marginTop: 14 },
-  actionText: { color: Colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 5 },
-  projectCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 18, ...Shadow.card },
-  projectHeader: { flexDirection: 'row', alignItems: 'flex-start' },
-  projectIcon: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#EDF4FA', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  projectTitle: { fontSize: Typography.h3, fontWeight: '900', color: Colors.text },
-  projectText: { color: Colors.textSecondary, lineHeight: 19, marginTop: 5 },
-  tipCard: { flexDirection: 'row', backgroundColor: '#EDF9F2', borderRadius: Radius.lg, padding: Spacing.lg, marginTop: 18 },
-  tipTitle: { color: Colors.text, fontWeight: '900' },
-  tipText: { color: Colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F6F8FB',
+  },
+
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: 120,
+  },
+
+  hero: {
+    backgroundColor: '#0A365D',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    ...Shadow.card,
+  },
+
+  heroIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+
+  eyebrow: {
+    color: '#BFD6E8',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
+  title: {
+    color: Colors.white,
+    fontSize: Typography.h1,
+    lineHeight: 32,
+    fontWeight: '900',
+    marginTop: 8,
+  },
+
+  subtitle: {
+    color: '#DFEAF2',
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 12,
+  },
+
+  primaryButton: {
+    minHeight: 56,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primary,
+    marginTop: 24,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  primaryText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: '900',
+    marginRight: 10,
+  },
+
+  simulatorImageCard: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: 8,
+    marginTop: 18,
+    overflow: 'hidden',
+    ...Shadow.card,
+  },
+
+  simulatorImage: {
+    width: '100%',
+    height: 215,
+    borderRadius: Radius.md,
+  },
+
+  simulatorImageCaption: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
+  sectionTitle: {
+    fontSize: Typography.h2,
+    fontWeight: '900',
+    color: Colors.text,
+    marginTop: 28,
+    marginBottom: 14,
+  },
+
+  stepsCard: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+    ...Shadow.card,
+  },
+
+  stepRow: {
+    minHeight: 92,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF1F4',
+  },
+
+  stepRowLast: {
+    borderBottomWidth: 0,
+  },
+
+  stepNumber: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFF3EC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+
+  stepNumberText: {
+    color: Colors.primary,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+
+  stepContent: {
+    flex: 1,
+  },
+
+  stepTitle: {
+    color: Colors.text,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  stepText: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
+  },
+
+  benefitsCard: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+    ...Shadow.card,
+  },
+
+  benefitRow: {
+    minHeight: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF1F4',
+  },
+
+  benefitRowLast: {
+    borderBottomWidth: 0,
+  },
+
+  benefitText: {
+    flex: 1,
+    marginLeft: 10,
+    color: Colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
+
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: '#EDF4FA',
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    marginTop: 20,
+  },
+
+  infoText: {
+    flex: 1,
+    color: Colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
+    marginLeft: 10,
+  },
 });

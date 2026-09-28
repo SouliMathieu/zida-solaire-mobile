@@ -13,6 +13,10 @@ import ContactScreen from '../screens/profile/ContactScreen';
 import DevisScreen from '../screens/profile/DevisScreen';
 import InstallationRequestScreen from '../screens/profile/InstallationRequestScreen';
 import RepairRequestV2Screen from '../screens/profile/RepairRequestV2Screen';
+import InstallationsScreen, {
+  CustomerInstallation,
+} from '../screens/energy/InstallationsScreen';
+import InstallationDetailScreen from '../screens/energy/InstallationDetailScreen';
 import CartStackNavigator from './CartStackNavigator';
 import OrdersStackNavigator from './OrdersStackNavigator';
 import { Colors } from '../constants/colors';
@@ -30,6 +34,10 @@ export type ProfileStackParamList = {
   Devis: undefined;
   InstallationRequest: undefined;
   RepairRequest: undefined;
+  Installations: undefined;
+  InstallationDetail: {
+    installation: CustomerInstallation;
+  };
   CartArea: undefined;
   OrdersArea: undefined;
 };
@@ -74,6 +82,8 @@ export default function ProfileStackNavigator() {
       <Stack.Screen name="Devis" component={DevisScreen} options={{ title: 'Demande de devis' }} />
       <Stack.Screen name="InstallationRequest" component={InstallationRequestScreen} options={{ title: "Demande d'installation" }} />
       <Stack.Screen name="RepairRequest" component={RepairRequestV2Screen} options={{ title: 'Assistance' }} />
+      <Stack.Screen name="Installations" component={InstallationsScreen} options={{ title: 'Mes installations' }} />
+      <Stack.Screen name="InstallationDetail" component={InstallationDetailScreen} options={{ title: 'Suivi du projet' }} />
       <Stack.Screen name="CartArea" component={CartStackNavigator} options={{ title: 'Mon panier', headerShown: false }} />
       <Stack.Screen name="OrdersArea" component={OrdersStackNavigator} options={{ title: 'Mes commandes', headerShown: false }} />
     </Stack.Navigator>

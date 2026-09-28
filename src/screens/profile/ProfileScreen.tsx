@@ -67,6 +67,12 @@ export default function ProfileScreen() {
 
       <Text style={styles.sectionTitle}>Services</Text>
       <View style={styles.cardGroup}>
+        <MenuRow
+          icon="home-outline"
+          title="Mes installations"
+          subtitle="Suivre mes demandes, rendez-vous et travaux"
+          onPress={() => navigation.navigate('Installations')}
+        />
         <MenuRow icon="notifications-outline" title="Activité & notifications" subtitle={unreadCount > 0 ? `${unreadCount} mise${unreadCount > 1 ? 's' : ''} à jour non lue${unreadCount > 1 ? 's' : ''}` : 'Tout est à jour'} badge={unreadCount} onPress={() => navigation.navigate('Notifications')} />
         <MenuRow icon="receipt-outline" title="Mes commandes" subtitle="Suivre mes commandes" onPress={() => navigation.navigate('OrdersArea')} />
         <MenuRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''} en attente`} onPress={() => navigation.navigate('CartArea')} />
