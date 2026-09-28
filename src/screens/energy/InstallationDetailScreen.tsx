@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
-import { EnergyStackParamList } from '../../navigation/EnergyStackNavigator';
+import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 
 const STEPS = [
   { key: 'NEW', label: 'Demande reçue', icon: 'mail-outline' },
@@ -16,7 +16,7 @@ const STEPS = [
   { key: 'COMPLETED', label: 'Installation terminée', icon: 'shield-checkmark-outline' },
 ] as const;
 
-type Route = RouteProp<EnergyStackParamList, 'InstallationDetail'>;
+type Route = RouteProp<ProfileStackParamList, 'InstallationDetail'>;
 
 export default function InstallationDetailScreen() {
   const route = useRoute<Route>();

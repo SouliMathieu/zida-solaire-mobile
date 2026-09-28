@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { fetchCustomerInstallations } from '../../services/api';
-import { EnergyStackParamList } from '../../navigation/EnergyStackNavigator';
+import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 import { useUserStore } from '../../store/userStore';
 
 export type CustomerInstallation = {
@@ -28,7 +28,7 @@ export type CustomerInstallation = {
   updatedAt: string;
 };
 
-type Nav = NativeStackNavigationProp<EnergyStackParamList, 'Installations'>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList, 'Installations'>;
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'Demande reçue',
@@ -68,7 +68,7 @@ export default function InstallationsScreen() {
       <View style={styles.center}>
         <Ionicons name="cloud-offline-outline" size={44} color={Colors.textSecondary} />
         <Text style={styles.emptyTitle}>Suivi indisponible</Text>
-        <Text style={styles.emptyText}>Le service de suivi n'est pas encore disponible sur le serveur utilisé par cette version.</Text>
+        <Text style={styles.emptyText}>Impossible de charger vos projets pour le moment. Veuillez réessayer.</Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}><Text style={styles.retryText}>Réessayer</Text></TouchableOpacity>
       </View>
     );
