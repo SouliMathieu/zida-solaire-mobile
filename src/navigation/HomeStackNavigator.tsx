@@ -50,7 +50,7 @@ export default function HomeStackNavigator() {
       })}
     >
       <Stack.Screen name="HomeMain" component={HomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SolarAssistant" component={SolarAssistantScreen} options={{ title: 'Assistant solaire' }} />
+      <Stack.Screen name="SolarAssistant" component={SolarAssistantScreen} options={{ title: 'Simulateur solaire' }} />
       <Stack.Screen name="SolarResult" component={SolarResultScreen} options={{ title: 'Votre solution solaire' }} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Détails du produit' }} />
       <Stack.Screen
