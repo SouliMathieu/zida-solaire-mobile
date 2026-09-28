@@ -8,7 +8,12 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import api from '../../services/api';
-import { SolarAnswers, estimateSolarSystem, buildSolarStudyDescription } from '../../utils/solarEstimator';
+import {
+  SolarAnswers,
+  SOLAR_APPLIANCES,
+  estimateSolarSystem,
+  buildSolarStudyDescription,
+} from '../../utils/solarEstimator';
 import { HomeStackParamList } from '../../navigation/HomeStackNavigator';
 
 type ResultRoute = RouteProp<HomeStackParamList, 'SolarResult'>;
@@ -495,6 +500,24 @@ export default function SolarResultScreen() {
     );
 
 
+  const backupSummary = useMemo(() => {
+    const selected = answers.backupAppliances ?? [];
+
+    if (!selected.length) {
+      return 'les appareils importants sélectionnés';
+    }
+
+    return selected
+      .map((item) => {
+        const label = SOLAR_APPLIANCES[item.id].label;
+
+        return item.quantity > 1
+          ? `${label} (${item.quantity})`
+          : label;
+      })
+      .join(', ');
+  }, [answers.backupAppliances]);
+
   const generateSimulatedQuote = async () => {
     setGeneratingQuote(true);
 
@@ -620,9 +643,9 @@ export default function SolarResultScreen() {
               </div>
 
               <p>
-                Cette option catalogue est séparée du besoin
-                calculé. La configuration finale doit être
-                confirmée par l'équipe technique ZIDA.
+                Ce kit est proposé à titre indicatif.
+                L'équipe ZIDA confirmera avec vous les autres
+                éléments nécessaires.
               </p>
             </div>
           `
@@ -843,9 +866,9 @@ export default function SolarResultScreen() {
 
                 <tr>
                   <td>Batterie solaire</td>
-                  <td>1 besoin dimensionné</td>
+                  <td>1 batterie</td>
                   <td>
-                    ≥ ${result.batteryKwh} kWh
+                    Au moins ${result.batteryKwh} kWh
                   </td>
                   <td>À confirmer</td>
                   <td>À confirmer</td>
@@ -853,9 +876,9 @@ export default function SolarResultScreen() {
 
                 <tr>
                   <td>Onduleur solaire</td>
-                  <td>1 besoin dimensionné</td>
+                  <td>1 onduleur</td>
                   <td>
-                    ≥ ${result.inverterKva} kVA
+                    Au moins ${result.peakPowerKw} kW
                   </td>
                   <td>À confirmer</td>
                   <td>À confirmer</td>
@@ -875,7 +898,7 @@ export default function SolarResultScreen() {
 
               <div class="summary-row">
                 <span class="summary-label">
-                  Consommation quotidienne estimée
+                  Consommation estimée par jour estimée
                 </span>
                 <span class="summary-value">
                   ${result.dailyEnergyKwh} kWh/jour
@@ -884,13 +907,14 @@ export default function SolarResultScreen() {
 
               <div class="summary-row">
                 <span class="summary-label">
-                  Budget indicatif
+                  Montant des éléments déjà tarifés
                 </span>
                 <span class="summary-value">
-                  ${formatPrice(result.budgetLow)}
-                  –
-                  ${formatPrice(result.budgetHigh)}
-                  FCFA
+                  ${
+                    panelTotalPrice
+                      ? `${formatPrice(panelTotalPrice)} FCFA`
+                      : 'À confirmer'
+                  }
                 </span>
               </div>
             </div>
@@ -904,12 +928,10 @@ export default function SolarResultScreen() {
             ${kitOption}
 
             <div class="footer">
-              Les capacités de batterie et d'onduleur indiquées
-              correspondent à un minimum de dimensionnement.
-              Les produits, protections, installation, prix
-              définitifs et la configuration finale doivent être
-              confirmés par l'équipe technique ZIDA après étude
-              du site.
+              Cette estimation vous donne une première idée du
+              matériel nécessaire. Les équipements, l'installation
+              et le prix final seront confirmés par ZIDA après
+              vérification de votre besoin.
             </div>
           </body>
         </html>
@@ -983,12 +1005,16 @@ export default function SolarResultScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.recommendedBadge}>
         <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
-        <Text style={styles.recommendedText}>Solution indicative recommandée par ZIDA</Text>
+        <Text style={styles.recommendedText}>Estimation ZIDA selon vos besoins</Text>
       </View>
 
       <Text style={styles.eyebrow}>VOTRE SOLUTION SOLAIRE</Text>
-      <Text style={styles.title}>Une base adaptée à vos besoins</Text>
-      <Text style={styles.subtitle}>Cette estimation sert à préparer votre étude technique. Elle sera confirmée par un technicien ZIDA.</Text>
+      <Text style={styles.title}>Voici ce qu'il vous faut</Text>
+      <Text style={styles.subtitle}>
+        Cette première estimation est basée sur les appareils et les
+        besoins que vous avez indiqués. L'équipe ZIDA confirmera le
+        choix final avec vous.
+      </Text>
 
 
       <View style={styles.catalogCard}>
@@ -1000,10 +1026,6 @@ export default function SolarResultScreen() {
           />
 
           <View style={styles.catalogHeaderText}>
-            <Text style={styles.catalogEyebrow}>
-              CE QU'IL VOUS FAUT
-            </Text>
-
             <Text style={styles.catalogTitle}>
               Matériel nécessaire
             </Text>
@@ -1025,21 +1047,34 @@ export default function SolarResultScreen() {
                 <SizingRow
                   icon="sunny-outline"
                   label={`${catalogRecommendation.panelCount} panneaux solaires`}
-                  value={`${catalogRecommendation.panelWatts} W chacun`}
+                  value={`${catalogRecommendation.panelWatts} W chacun\n${(
+                    (catalogRecommendation.panelCount ?? 0) *
+                    (catalogRecommendation.panelWatts ?? 0)
+                  ).toLocaleString('fr-FR')} W au total`}
                 />
               )}
 
             <SizingRow
               icon="battery-charging-outline"
-              label="Batterie minimale"
-              value={`≥ ${result.batteryKwh} kWh`}
+              label="Batterie conseillée"
+              value={`Au moins ${result.batteryKwh} kWh`}
             />
+
+            <Text style={styles.catalogHint}>
+              Cette batterie est calculée pour garder en marche :
+              {' '}{backupSummary}.
+            </Text>
 
             <SizingRow
               icon="flash-outline"
-              label="Onduleur minimal"
-              value={`≥ ${result.inverterKva} kVA`}
+              label="Onduleur conseillé"
+              value={`Au moins ${result.peakPowerKw} kW`}
             />
+
+            <Text style={styles.catalogHint}>
+              Il doit être assez puissant pour faire fonctionner et
+              démarrer vos appareils sans problème.
+            </Text>
 
             <View style={styles.catalogOffer}>
               <Text style={styles.catalogOfferEyebrow}>
@@ -1077,7 +1112,7 @@ export default function SolarResultScreen() {
                   />
 
                   <Text style={styles.catalogPriceLabel}>
-                    Prix catalogue indicatif
+                    Prix du kit
                   </Text>
 
                   <Text style={styles.catalogPrice}>
@@ -1088,9 +1123,10 @@ export default function SolarResultScreen() {
                   </Text>
 
                   <Text style={styles.catalogHint}>
-                    Ce kit est une option disponible au catalogue.
-                    La configuration finale reste à confirmer par
-                    l'équipe technique ZIDA.
+                    Ce kit couvre votre besoin estimé et offre une
+                    marge supplémentaire si vous souhaitez alimenter
+                    d'autres appareils plus tard. L'équipe ZIDA vous
+                    aidera à confirmer le choix le plus adapté.
                   </Text>
                 </>
               ) : (
@@ -1107,57 +1143,36 @@ export default function SolarResultScreen() {
       </View>
 
       <View style={styles.sizingCard}>
-        <Text style={styles.sizingTitle}>Détails du dimensionnement</Text>
+        <Text style={styles.sizingTitle}>
+          Votre estimation en bref
+        </Text>
 
         <SizingRow
           icon="analytics-outline"
-          label="Consommation quotidienne"
+          label="Consommation estimée par jour"
           value={`${result.dailyEnergyKwh} kWh/j`}
         />
 
         <SizingRow
-          icon="flash-outline"
-          label="Puissance simultanée"
-          value={`${result.simultaneousPeakKw} kW`}
-        />
-
-        <SizingRow
-          icon="speedometer-outline"
-          label="Pointe de démarrage"
-          value={`${result.surgePeakKw} kW`}
-        />
-
-        <SizingRow
-          icon="battery-half-outline"
-          label="Énergie critique maximale"
-          value={`${result.batteryWorstCaseEnergyKwh} kWh`}
-        />
-
-        <SizingRow
           icon="time-outline"
-          label="Fenêtre critique batterie"
-          value={formatBatteryWindow(
-            result.batterySizingStartHour,
-            result.batterySizingWindowHours,
-          )}
+          label="Durée souhaitée en cas de coupure"
+          value={`${result.autonomyHours} h`}
         />
 
         <Text style={styles.sizingHint}>
-          La batterie est dimensionnée sur la période continue la plus exigeante
-          correspondant à l’autonomie demandée.
+          Appareils à garder en marche : {backupSummary}.
+        </Text>
+
+        <Text style={styles.sizingHint}>
+          La batterie conseillée tient compte de ces appareils
+          et de la durée que vous avez choisie.
         </Text>
       </View>
 
-      <View style={styles.budgetCard}>
-        <Text style={styles.budgetLabel}>Budget indicatif</Text>
-        <Text style={styles.budgetValue}>{formatPrice(result.budgetLow)} – {formatPrice(result.budgetHigh)} FCFA</Text>
-        <Text style={styles.budgetHint}>Matériel + installation estimative, à confirmer après étude du site.</Text>
-      </View>
-
       <View style={styles.benefitsCard}>
-        <Benefit text="Dimensionnement basé sur vos usages déclarés" />
-        <Benefit text="Solution ajustable selon votre budget" />
-        <Benefit text="Validation finale par l’équipe technique ZIDA" />
+        <Benefit text="Calcul basé sur les appareils que vous avez indiqués" />
+        <Benefit text="Les prix connus du catalogue sont affichés" />
+        <Benefit text="Le choix final sera confirmé avec un conseiller ZIDA" />
       </View>
 
       <TouchableOpacity
@@ -1182,17 +1197,20 @@ export default function SolarResultScreen() {
         <Text style={styles.simulatedQuoteButtonText}>
           {generatingQuote
             ? 'Génération du devis...'
-            : 'Télécharger le devis simulé'}
+            : 'Télécharger mon estimation'}
         </Text>
       </TouchableOpacity>
 
       <Text style={styles.simulatedQuoteHint}>
-        Le document reprend les besoins calculés et le budget
-        indicatif. Il ne remplace pas une étude technique ZIDA.
+        Ce document résume votre besoin et les prix déjà connus.
+        Les autres prix seront confirmés par ZIDA.
       </Text>
 
-      <Text style={styles.sectionTitle}>Demander une étude technique</Text>
-      <Text style={styles.sectionSubtitle}>Votre demande arrivera dans le même back-office que les demandes du site.</Text>
+      <Text style={styles.sectionTitle}>Recevoir une étude personnalisée</Text>
+      <Text style={styles.sectionSubtitle}>
+        Laissez vos coordonnées. Un conseiller ZIDA vous contactera
+        pour confirmer vos besoins et vous proposer une solution adaptée.
+      </Text>
       <View style={styles.formCard}>
         <View style={styles.row}>
           <TextInput style={[styles.input, styles.half]} placeholder="Prénom *" value={firstName} onChangeText={setFirstName} />
@@ -1202,7 +1220,7 @@ export default function SolarResultScreen() {
         <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
         <TextInput style={styles.input} placeholder="Adresse / quartier" value={address} onChangeText={setAddress} />
         <TouchableOpacity style={[styles.primaryButton, sending && { opacity: 0.6 }]} onPress={submitStudy} disabled={sending} activeOpacity={0.85}>
-          <Text style={styles.primaryText}>{sending ? 'Envoi...' : 'Demander une étude gratuite'}</Text>
+          <Text style={styles.primaryText}>{sending ? 'Envoi...' : 'Envoyer ma demande'}</Text>
           <Ionicons name="arrow-forward" size={18} color={Colors.white} />
         </TouchableOpacity>
       </View>
@@ -1440,10 +1458,15 @@ const styles = StyleSheet.create({
   },
   sizingLabel: {
     flex: 1,
+    flexShrink: 1,
+    paddingRight: 8,
     color: Colors.textSecondary,
     fontSize: 13,
   },
   sizingValue: {
+    width: 110,
+    flexShrink: 0,
+    textAlign: 'right',
     color: Colors.text,
     fontWeight: '800',
     fontSize: 13,
