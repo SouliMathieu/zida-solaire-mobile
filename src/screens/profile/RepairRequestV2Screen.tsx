@@ -51,12 +51,12 @@ export default function RepairRequestV2Screen() {
       await queryClient.invalidateQueries({ queryKey: ['customer-repairs'] });
       const ticket = result?.repairRequest?.id ? `\nRéférence : ${result.repairRequest.id}` : '';
       Alert.alert(
-        'Demande SAV envoyée',
-        `Votre demande a été enregistrée dans le système ZIDA SOLAIRE.${ticket}`,
+        'Demande envoyée',
+        `Votre demande a bien été enregistrée.${ticket}`,
         authenticated
           ? [
               { text: 'Fermer', style: 'cancel', onPress: () => navigation.goBack() },
-              { text: 'Voir mes tickets', onPress: () => navigation.replace('RepairTickets') },
+              { text: 'Suivre ma demande', onPress: () => navigation.replace('RepairTickets') },
             ]
           : [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
@@ -74,7 +74,7 @@ export default function RepairRequestV2Screen() {
           <View style={styles.heroIcon}><Ionicons name="build-outline" size={28} color={Colors.primary} /></View>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroTitle}>Signaler un problème</Text>
-            <Text style={styles.heroText}>Décrivez votre panne. Votre demande sera transmise directement au service technique ZIDA.</Text>
+            <Text style={styles.heroText}>Décrivez simplement ce qui ne fonctionne pas. L'équipe ZIDA recevra votre demande.</Text>
           </View>
         </View>
 
@@ -91,7 +91,7 @@ export default function RepairRequestV2Screen() {
           })}
         </View>
 
-        <Text style={styles.sectionTitle}>Niveau d'urgence</Text>
+        <Text style={styles.sectionTitle}>À quel point est-ce urgent ?</Text>
         <View style={styles.segmented}>
           {[['low', 'Faible'], ['normal', 'Normal'], ['high', 'Urgent']].map(([id, label]) => (
             <TouchableOpacity key={id} style={[styles.segment, urgency === id && styles.segmentActive]} onPress={() => setUrgency(id as any)}>
@@ -119,7 +119,10 @@ export default function RepairRequestV2Screen() {
 
         <View style={styles.notice}>
           <Ionicons name="shield-checkmark-outline" size={20} color={Colors.success} />
-          <Text style={styles.noticeText}>Votre demande est enregistrée dans le même système que les demandes du site ZIDA SOLAIRE.</Text>
+          <Text style={styles.noticeText}>
+            Si vous êtes connecté, vous pourrez suivre l'avancement de
+            votre demande dans « Suivre mes demandes ».
+          </Text>
         </View>
 
         <View style={{ height: 110 }} />
@@ -128,7 +131,7 @@ export default function RepairRequestV2Screen() {
       <View style={styles.footer}>
         <TouchableOpacity style={[styles.submit, sending && { opacity: 0.6 }]} onPress={submit} disabled={sending}>
           {sending ? <ActivityIndicator color={Colors.white} /> : <>
-            <Text style={styles.submitText}>Envoyer ma demande d'assistance</Text>
+            <Text style={styles.submitText}>Envoyer ma demande</Text>
             <Ionicons name="arrow-forward" size={18} color={Colors.white} />
           </>}
         </TouchableOpacity>

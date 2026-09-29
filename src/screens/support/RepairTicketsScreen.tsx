@@ -49,14 +49,14 @@ export default function RepairTicketsScreen() {
           <View style={styles.headerCard}>
             <Text style={styles.eyebrow}>Assistance ZIDA</Text>
             <Text style={styles.headerTitle}>Mes demandes d'assistance</Text>
-            <Text style={styles.headerText}>Suivez ici les tickets enregistrés avec le numéro de votre compte.</Text>
+            <Text style={styles.headerText}>Retrouvez ici vos demandes et leur état d'avancement.</Text>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.centerInline}>
             <Ionicons name="build-outline" size={48} color={Colors.gray} />
-            <Text style={styles.emptyTitle}>{error ? "Historique indisponible" : "Aucune demande d'assistance"}</Text>
-            <Text style={styles.emptyText}>{error ? 'Le service client n’est pas encore accessible sur cette version du backend.' : 'Vos futures demandes apparaîtront ici.'}</Text>
+            <Text style={styles.emptyTitle}>{error ? "Impossible de charger vos demandes" : "Aucune demande d'assistance"}</Text>
+            <Text style={styles.emptyText}>{error ? 'Impossible de charger vos demandes pour le moment. Veuillez réessayer.' : 'Vos futures demandes apparaîtront ici.'}</Text>
             <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('RepairRequest')}>
               <Text style={styles.primaryText}>Signaler un problème</Text>
             </TouchableOpacity>

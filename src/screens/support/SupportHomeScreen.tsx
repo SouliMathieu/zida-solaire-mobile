@@ -14,6 +14,7 @@ type Nav = NativeStackNavigationProp<SupportStackParamList, 'SupportHome'>;
 const phone = '+22625506464';
 const whatsapp = '22674339977';
 
+
 export default function SupportHomeScreen() {
   const navigation = useNavigation<Nav>();
   const authenticated = useUserStore((state) => state.isAuthenticated());
@@ -23,34 +24,41 @@ export default function SupportHomeScreen() {
       <View style={styles.hero}>
         <View style={styles.iconWrap}><Ionicons name="headset" size={30} color={Colors.primary} /></View>
         <Text style={styles.eyebrow}>ASSISTANCE ZIDA</Text>
-        <Text style={styles.title}>Une aide simple quand vous en avez besoin</Text>
-        <Text style={styles.subtitle}>Dépannage, question, installation ou suivi : choisissez le canal le plus rapide pour votre situation.</Text>
+        <Text style={styles.title}>Comment pouvons-nous vous aider ?</Text>
+        <Text style={styles.subtitle}>Signalez un problème, suivez une demande ou contactez directement l'équipe ZIDA.</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Que souhaitez-vous faire ?</Text>
+      <Text style={styles.sectionTitle}>Choisissez ce dont vous avez besoin</Text>
       <SupportCard
         icon="build-outline"
-        title="Signaler un problème"
-        text="Onduleur, batterie, panneaux, pompe ou installation électrique."
+        title="J’ai un problème technique"
+        text="Un équipement ne fonctionne plus correctement ? Signalez-le ici."
         onPress={() => navigation.navigate('RepairRequest')}
       />
       <SupportCard
         icon="receipt-outline"
-        title="Mes demandes"
-        text={authenticated ? "Consultez les demandes liées à votre compte et leur statut." : "Connectez-vous pour suivre vos demandes d'assistance."}
+        title="Suivre mes demandes"
+        text={authenticated ? "Consultez l’avancement de vos demandes d’assistance." : "Connectez-vous pour retrouver et suivre vos demandes."}
         onPress={() => navigation.navigate('RepairTickets')}
       />
       <SupportCard
         icon="construct-outline"
         title="Demander une installation"
-        text="Planifiez une étude ou une intervention avec l'équipe technique."
+        text="Vous souhaitez une nouvelle installation solaire ? Faites votre demande ici."
         onPress={() => navigation.navigate('InstallationRequest')}
       />
       <SupportCard
         icon="chatbubble-ellipses-outline"
-        title="Écrire à ZIDA"
-        text="Posez une question générale ou commerciale."
+        title="Poser une question"
+        text="Une question sur nos produits, nos services ou votre projet ?"
         onPress={() => navigation.navigate('Contact')}
+      />
+
+      <SupportCard
+        icon="information-circle-outline"
+        title="À propos de ZIDA SOLAIRE"
+        text="Découvrez notre histoire, nos activités, nos valeurs et notre engagement."
+        onPress={() => navigation.navigate('AboutZida')}
       />
 
       <View style={styles.contactRow}>
@@ -67,8 +75,11 @@ export default function SupportHomeScreen() {
       <View style={styles.infoCard}>
         <Ionicons name="time-outline" size={23} color={Colors.secondary} />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.infoTitle}>Votre demande reste traçable</Text>
-          <Text style={styles.infoText}>Les demandes d'assistance et demandes d'installation envoyés depuis l'application sont enregistrés dans le même système que ceux du site ZIDA.</Text>
+          <Text style={styles.infoTitle}>Gardez le suivi de vos demandes</Text>
+          <Text style={styles.infoText}>
+            Si vous êtes connecté, vous pouvez retrouver l'avancement de
+            vos demandes directement dans l'application.
+          </Text>
         </View>
       </View>
     </ScrollView>

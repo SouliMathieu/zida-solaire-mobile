@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SupportHomeScreen from '../screens/support/SupportHomeScreen';
+import AboutZidaScreen from '../screens/support/AboutZidaScreen';
 import RepairRequestV2Screen from '../screens/profile/RepairRequestV2Screen';
 import InstallationRequestScreen from '../screens/profile/InstallationRequestScreen';
 import ContactScreen from '../screens/profile/ContactScreen';
@@ -17,6 +18,7 @@ export type SupportStackParamList = {
   RepairTicketDetail: { ticket: RepairTicket };
   InstallationRequest: undefined;
   Contact: undefined;
+  AboutZida: undefined;
 };
 
 const Stack = createNativeStackNavigator<SupportStackParamList>();
@@ -52,8 +54,13 @@ export default function SupportStackNavigator() {
       <Stack.Screen name="RepairRequest" component={RepairRequestV2Screen} options={{ title: 'Signaler un problème' }} />
       <Stack.Screen name="RepairTickets" component={RepairTicketsScreen} options={{ title: 'Mes demandes' }} />
       <Stack.Screen name="RepairTicketDetail" component={RepairTicketDetailScreen} options={{ title: 'Détail du ticket' }} />
-      <Stack.Screen name="InstallationRequest" component={InstallationRequestScreen} options={{ title: "Demande d'installation" }} />
+      <Stack.Screen name="InstallationRequest" component={InstallationRequestScreen} options={{ title: "Nouvelle installation" }} />
       <Stack.Screen name="Contact" component={ContactScreen} options={{ title: 'Nous contacter' }} />
+      <Stack.Screen
+        name="AboutZida"
+        component={AboutZidaScreen}
+        options={{ title: 'À propos de ZIDA' }}
+      />
     </Stack.Navigator>
   );
 }

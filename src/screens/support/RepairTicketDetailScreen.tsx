@@ -37,14 +37,14 @@ export default function RepairTicketDetailScreen() {
         </View>
       </View>
 
-      <Text style={styles.reference}>TICKET {ticket.id.slice(-8).toUpperCase()}</Text>
+      <Text style={styles.reference}>DEMANDE {ticket.id.slice(-8).toUpperCase()}</Text>
       <Text style={styles.title}>{ticket.installationType || 'Assistance technique'}</Text>
 
       <Section title="Problème signalé">
         <Text style={styles.body}>{ticket.problemDescription}</Text>
       </Section>
 
-      <Section title="Informations du ticket">
+      <Section title="Informations">
         <InfoRow icon="alert-circle-outline" label="Urgence" value={urgencyLabel(ticket.urgency)} />
         <InfoRow icon="shield-checkmark-outline" label="Installation ZIDA" value={ticket.installedByZida ? 'Oui' : 'Non'} />
         {!!ticket.address && <InfoRow icon="location-outline" label="Adresse" value={ticket.address} />}
@@ -54,12 +54,15 @@ export default function RepairTicketDetailScreen() {
 
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={22} color={Colors.secondary} />
-        <Text style={styles.noticeText}>Le statut affiché provient directement du système ZIDA SOLAIRE. Pour ajouter des précisions ou demander une modification, contactez l’assistance.</Text>
+        <Text style={styles.noticeText}>
+          L'équipe ZIDA met à jour l'avancement de votre demande.
+          Si vous souhaitez ajouter une information, contactez-nous.
+        </Text>
       </View>
 
       <TouchableOpacity style={styles.supportButton} onPress={() => navigation.navigate('Contact')}>
         <Ionicons name="chatbubble-ellipses-outline" size={20} color={Colors.white} />
-        <Text style={styles.supportText}>Contacter ZIDA à propos de ce ticket</Text>
+        <Text style={styles.supportText}>Contacter ZIDA pour cette demande</Text>
       </TouchableOpacity>
     </ScrollView>
   );
