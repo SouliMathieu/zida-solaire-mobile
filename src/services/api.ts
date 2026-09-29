@@ -94,33 +94,82 @@ export const createOrder = async (orderData: {
   return response.data;
 };
 
+export type AuthResponse = {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+  };
+  token: string;
+  message?: string;
+};
+
+export type RegistrationData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  pin: string;
+  confirmPin: string;
+  address?: string;
+  city?: string;
+};
+
+export type EmailChallengeResponse = {
+  challengeId: string;
+  email: string;
+  expiresIn: number;
+  message?: string;
+  devCode?: string;
+};
+
+export type PinResetRequestResponse = {
+  resetId: string;
+  email?: string;
+  expiresIn?: number;
+  message: string;
+  devCode?: string;
+};
+
+export const customerLogin = async (data: {
+  phone: string;
+  pin: string;
+}): Promise<AuthResponse> =>
+  (await api.post('/customer/login', data)).data;
+
+export const customerRegister = async (
+  userData: RegistrationData
+): Promise<EmailChallengeResponse> =>
+  (await api.post('/customer/register', userData)).data;
+
+export const verifyCustomerRegistrationEmail = async (data: {
+  challengeId: string;
+  code: string;
+}): Promise<AuthResponse> =>
+  (await api.post('/customer/register/verify-email', data)).data;
+
+export const requestCustomerPinReset = async (
+  identifier: string
+): Promise<PinResetRequestResponse> =>
+  (await api.post('/customer/pin/reset/request', { identifier })).data;
+
+export const confirmCustomerPinReset = async (data: {
+  resetId: string;
+  code: string;
+  newPin: string;
+  confirmPin: string;
+}): Promise<{ message: string }> =>
+  (await api.post('/customer/pin/reset/confirm', data)).data;
+
 export type OtpChallengeResponse = {
   challengeId: string;
   phone: string;
   expiresIn: number;
   devCode?: string;
 };
-
-export const customerLogin = async (phone: string): Promise<OtpChallengeResponse> =>
-  (await api.post('/customer/login', { phone })).data;
-
-export const verifyCustomerLoginOtp = async (data: { challengeId: string; phone: string; code: string }) =>
-  (await api.post('/customer/login/verify', data)).data;
-
-export type RegistrationData = {
-  firstName: string;
-  lastName: string;
-  email?: string;
-  phone: string;
-  address?: string;
-  city?: string;
-};
-
-export const customerRegister = async (userData: RegistrationData): Promise<OtpChallengeResponse> =>
-  (await api.post('/customer/register', userData)).data;
-
-export const verifyCustomerRegisterOtp = async (userData: RegistrationData & { challengeId: string; code: string }) =>
-  (await api.post('/customer/register/verify', userData)).data;
 
 export const requestCustomerPhoneChange = async (phone: string): Promise<OtpChallengeResponse> =>
   (await api.post('/customer/phone-change/request', { phone })).data;

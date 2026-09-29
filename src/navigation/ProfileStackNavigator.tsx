@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import LoginScreen from '../screens/profile/LoginScreen';
 import RegisterScreen from '../screens/profile/RegisterScreen';
+import ForgotPinScreen from '../screens/profile/ForgotPinScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import ChangePhoneScreen from '../screens/profile/ChangePhoneScreen';
 import NotificationsScreen from '../screens/profile/NotificationsScreen';
@@ -26,6 +27,7 @@ export type ProfileStackParamList = {
   ProfileMain: undefined;
   Login: undefined;
   Register: undefined;
+  ForgotPin: undefined;
   EditProfile: undefined;
   ChangePhone: undefined;
   Notifications: undefined;
@@ -74,6 +76,7 @@ export default function ProfileStackNavigator() {
       <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{ title: 'Mon compte' }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Connexion' }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Inscription' }} />
+      <Stack.Screen name="ForgotPin" component={ForgotPinScreen} options={{ title: 'PIN oublié' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Modifier le profil' }} />
       <Stack.Screen name="ChangePhone" component={ChangePhoneScreen} options={{ title: 'Changer mon numéro' }} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Activité & notifications' }} />

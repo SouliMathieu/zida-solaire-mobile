@@ -2,42 +2,58 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  confirmCustomerPinReset,
   customerLogin,
   customerRegister,
   getCustomerProfile,
   RegistrationData,
   requestCustomerPhoneChange,
+  requestCustomerPinReset,
   updateCustomerProfile,
-  verifyCustomerLoginOtp,
   verifyCustomerPhoneChange,
-  verifyCustomerRegisterOtp,
+  verifyCustomerRegistrationEmail,
 } from '../services/api';
 import { useUserStore } from '../store/userStore';
 
-export const useRequestLoginOtp = () =>
-  useMutation({ mutationFn: (phone: string) => customerLogin(phone) });
-
-export const useVerifyLoginOtp = () => {
+export const useLoginWithPin = () => {
   const setUser = useUserStore((state) => state.setUser);
+
   return useMutation({
-    mutationFn: verifyCustomerLoginOtp,
+    mutationFn: customerLogin,
     onSuccess: (data) => setUser(data.user, data.token),
   });
 };
 
-export const useRequestRegisterOtp = () =>
-  useMutation({ mutationFn: (userData: RegistrationData) => customerRegister(userData) });
+export const useRequestRegistration = () =>
+  useMutation({
+    mutationFn: (userData: RegistrationData) =>
+      customerRegister(userData),
+  });
 
-export const useVerifyRegisterOtp = () => {
+export const useVerifyRegistrationEmail = () => {
   const setUser = useUserStore((state) => state.setUser);
+
   return useMutation({
-    mutationFn: verifyCustomerRegisterOtp,
+    mutationFn: verifyCustomerRegistrationEmail,
     onSuccess: (data) => setUser(data.user, data.token),
   });
 };
+
+export const useRequestPinReset = () =>
+  useMutation({
+    mutationFn: (identifier: string) =>
+      requestCustomerPinReset(identifier),
+  });
+
+export const useConfirmPinReset = () =>
+  useMutation({
+    mutationFn: confirmCustomerPinReset,
+  });
 
 export const useRequestPhoneChangeOtp = () =>
-  useMutation({ mutationFn: (phone: string) => requestCustomerPhoneChange(phone) });
+  useMutation({
+    mutationFn: (phone: string) => requestCustomerPhoneChange(phone),
+  });
 
 export const useVerifyPhoneChangeOtp = () => {
   const setUser = useUserStore((state) => state.setUser);
@@ -57,6 +73,7 @@ export const useVerifyPhoneChangeOtp = () => {
 
 export const useProfile = () => {
   const token = useUserStore((state) => state.token);
+
   return useQuery({
     queryKey: ['profile'],
     queryFn: getCustomerProfile,
@@ -77,6 +94,7 @@ export const useUpdateProfile = () => {
       address?: string;
       city?: string;
     }) => updateCustomerProfile(userData),
+
     onSuccess: (data) => {
       updateUser(data);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
