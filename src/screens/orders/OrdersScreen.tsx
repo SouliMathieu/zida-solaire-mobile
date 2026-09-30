@@ -53,21 +53,21 @@ export default function OrdersScreen() {
             <View style={styles.hero}>
               <View style={styles.heroIcon}><Ionicons name="receipt-outline" size={26} color={Colors.primary} /></View>
               <Text style={styles.eyebrow}>MES COMMANDES</Text>
-              <Text style={styles.title}>Vos achats ZIDA sur cet appareil</Text>
-              <Text style={styles.subtitle}>En attendant la synchronisation complète avec votre compte client, cet écran conserve les commandes passées depuis cette application.</Text>
+              <Text style={styles.title}>Vos commandes ZIDA</Text>
+              <Text style={styles.subtitle}>Retrouvez ici les commandes liées à votre compte client et suivez leur statut.</Text>
             </View>
 
             <View style={styles.notice}>
               <Ionicons name="information-circle-outline" size={21} color={Colors.info} />
-              <Text style={styles.noticeText}>Les statuts affichés ici ne sont pas encore synchronisés automatiquement avec le back-office ZIDA.</Text>
+              <Text style={styles.noticeText}>Les commandes affichées ici sont synchronisées avec votre compte ZIDA.</Text>
             </View>
           </>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Ionicons name="bag-handle-outline" size={38} color={Colors.primary} /></View>
-            <Text style={styles.emptyTitle}>Aucune commande sur cet appareil</Text>
-            <Text style={styles.emptyText}>Les prochaines commandes passées depuis l’application apparaîtront ici automatiquement.</Text>
+            <Text style={styles.emptyTitle}>Aucune commande pour le moment</Text>
+            <Text style={styles.emptyText}>Vos prochaines commandes ZIDA apparaîtront ici automatiquement.</Text>
           </View>
         }
         renderItem={({ item }: { item: Order }) => (

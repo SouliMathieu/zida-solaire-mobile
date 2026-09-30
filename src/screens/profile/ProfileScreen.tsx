@@ -7,7 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
 import { useUserStore } from '../../store/userStore';
 import { useCartStore } from '../../store/cartStore';
-import { useOrdersStore } from '../../store/ordersStore';
+import { useOrders } from '../../hooks/useOrders';
 import { useNotifications } from '../../hooks/useNotifications';
 import { revokePushTokenOnLogout } from '../../services/pushNotifications';
 import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
@@ -19,7 +19,8 @@ export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
   const { user, isAuthenticated, logout } = useUserStore();
   const cartCount = useCartStore((state) => state.getTotalItems());
-  const orderCount = useOrdersStore((state) => state.getOrders().length);
+  const { data: syncedOrders = [] } = useOrders();
+  const orderCount = syncedOrders.length;
   const notifications = useNotifications();
   const unreadCount = notifications.data?.unreadCount || 0;
 

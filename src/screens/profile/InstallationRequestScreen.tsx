@@ -108,7 +108,11 @@ export default function InstallationRequestScreen() {
         address: formData.address.trim(),
         propertyType: formData.propertyType,
         roofType: formData.roofType || undefined,
-        averageMonthlyBill: formData.averageMonthlyBill || undefined,
+        averageMonthlyBill:
+          formData.averageMonthlyBill &&
+          formData.averageMonthlyBill !== 'Je ne sais pas'
+            ? `${formData.averageMonthlyBill} FCFA`
+            : formData.averageMonthlyBill || undefined,
         notes: formData.notes.trim() || undefined,
       });
 
@@ -329,9 +333,7 @@ export default function InstallationRequestScreen() {
                 onPress={() =>
                   updateField(
                     'averageMonthlyBill',
-                    bill === 'Je ne sais pas'
-                      ? bill
-                      : `${bill} FCFA`
+                    active ? '' : bill
                   )
                 }
               >
