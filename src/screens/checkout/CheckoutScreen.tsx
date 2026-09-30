@@ -18,6 +18,7 @@ import { Colors } from '../../constants/colors';
 import GradientButton from '../../components/common/GradientButton';
 import { useCartStore } from '../../store/cartStore';
 import { useCreateOrder } from '../../hooks/useOrders';
+import { Order } from '../../types';
 
 export default function CheckoutScreen() {
   const navigation = useNavigation();
@@ -56,19 +57,22 @@ export default function CheckoutScreen() {
     return true;
   };
 
-  const goToOrders = () => {
-    // CartStack -> ProfileStack -> BottomTabs
+  const goToOrder = (order: Order) => {
+    // Checkout est dans CartStack, lui-même dans ProfileStack.
     const profileStack = navigation.getParent();
-    const tabs = profileStack?.getParent();
-    // @ts-ignore nested navigator route
-    tabs?.navigate('Compte', { screen: 'OrdersArea' });
+
+    // @ts-ignore navigation vers le navigateur imbriqué des commandes
+    profileStack?.navigate('OrdersArea', {
+      screen: 'OrderDetail',
+      params: { order },
+    });
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
-      await createOrder.mutateAsync({
+      const createdOrder = await createOrder.mutateAsync({
         deliveryAddress: address,
         phone,
         customerName: name,
@@ -79,7 +83,12 @@ export default function CheckoutScreen() {
       Alert.alert(
         'Commande confirmée !',
         'Votre commande a été enregistrée avec succès. Nous vous contacterons bientôt.',
-        [{ text: 'Voir ma commande', onPress: goToOrders }]
+        [
+          {
+            text: 'Voir ma commande',
+            onPress: () => goToOrder(createdOrder),
+          },
+        ]
       );
     } catch (error) {
       Alert.alert(

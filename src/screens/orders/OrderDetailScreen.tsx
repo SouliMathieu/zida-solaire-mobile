@@ -59,7 +59,7 @@ export default function OrderDetailScreen() {
 
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={22} color={Colors.info} />
-        <Text style={styles.noticeText}>Cette commande a bien été créée depuis l’application. Son suivi détaillé sera synchronisé avec le back-office ZIDA dès que l’espace client serveur sera activé.</Text>
+        <Text style={styles.noticeText}>Cette commande est synchronisée avec votre compte ZIDA. Son statut évoluera au fur et à mesure de son traitement.</Text>
       </View>
 
       <Section title="Articles">
