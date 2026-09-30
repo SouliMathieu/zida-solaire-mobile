@@ -38,7 +38,7 @@ export default function OrderDetailScreen() {
   const { order } = route.params;
 
   const goToSupport = () => {
-    navigation.getParent()?.getParent()?.getParent()?.navigate('Assistance');
+    navigation.getParent()?.navigate('Contact');
   };
 
   return (

@@ -30,8 +30,10 @@ export default function CheckoutScreen() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
+  const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
 
   const totalPrice = getTotalPrice();
+  const displayTotal = confirmedTotal ?? totalPrice;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -72,6 +74,8 @@ export default function CheckoutScreen() {
     if (!validateForm()) return;
 
     try {
+      const submittedTotal = totalPrice;
+
       const createdOrder = await createOrder.mutateAsync({
         deliveryAddress: address,
         phone,
@@ -79,6 +83,8 @@ export default function CheckoutScreen() {
         customerEmail: email || undefined,
         notes: notes || undefined,
       });
+
+      setConfirmedTotal(submittedTotal);
 
       Alert.alert(
         'Commande confirmée !',
@@ -129,7 +135,7 @@ export default function CheckoutScreen() {
             <View style={styles.divider} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
+              <Text style={styles.totalPrice}>{formatPrice(displayTotal)}</Text>
             </View>
           </View>
         </View>
@@ -192,7 +198,7 @@ export default function CheckoutScreen() {
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
           <Text style={styles.footerLabel}>Total</Text>
-          <Text style={styles.footerPrice}>{formatPrice(totalPrice)}</Text>
+          <Text style={styles.footerPrice}>{formatPrice(displayTotal)}</Text>
         </View>
         <GradientButton title={createOrder.isPending ? 'Enregistrement...' : 'Confirmer la commande'} onPress={handleSubmit} disabled={createOrder.isPending || items.length === 0} />
       </View>
