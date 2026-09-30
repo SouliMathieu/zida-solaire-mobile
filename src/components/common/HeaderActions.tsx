@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../theme/tokens';
 import { useCartStore } from '../../store/cartStore';
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface HeaderActionsProps {
   onNotifications: () => void;
@@ -27,6 +28,10 @@ export default function HeaderActions({
   const totalItems = useCartStore(
     (state) => state.getTotalItems()
   );
+
+  const notifications = useNotifications();
+  const unreadCount =
+    notifications.data?.unreadCount || 0;
 
   const iconColor = overlay ? Colors.white : Colors.text;
 
@@ -47,6 +52,19 @@ export default function HeaderActions({
           size={22}
           color={iconColor}
         />
+
+        {unreadCount > 0 && (
+          <View
+            style={[
+              styles.badge,
+              overlay && styles.overlayBadge,
+            ]}
+          >
+            <Text style={styles.badgeText}>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity
