@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SupportHomeScreen from '../screens/support/SupportHomeScreen';
-import AboutZidaScreen from '../screens/support/AboutZidaScreen';
+import AboutScreen from '../screens/profile/AboutScreen';
 import RepairRequestV2Screen from '../screens/profile/RepairRequestV2Screen';
 import InstallationRequestScreen from '../screens/profile/InstallationRequestScreen';
 import ContactScreen from '../screens/profile/ContactScreen';
@@ -58,7 +58,7 @@ export default function SupportStackNavigator() {
       <Stack.Screen name="Contact" component={ContactScreen} options={{ title: 'Nous contacter' }} />
       <Stack.Screen
         name="AboutZida"
-        component={AboutZidaScreen}
+        component={AboutScreen}
         options={{ title: 'À propos de ZIDA' }}
       />
     </Stack.Navigator>

@@ -190,28 +190,28 @@ export default function AboutScreen() {
 
         <TouchableOpacity
           style={styles.contactCard}
-          onPress={() => openLink('tel:+22625506464')}
+          onPress={() => openLink('tel:+22674339977')}
         >
           <View style={styles.contactIcon}>
             <Ionicons name="call" size={24} color={Colors.primary} />
           </View>
           <View style={styles.contactContent}>
             <Text style={styles.contactLabel}>Téléphone</Text>
-            <Text style={styles.contactValue}>+226 25 50 64 64</Text>
+            <Text style={styles.contactValue}>+226 74 33 99 77</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.contactCard}
-          onPress={() => openLink('mailto:contact@zidasolaire.bf')}
+          onPress={() => openLink('mailto:Boubacarzida71@gmail.com')}
         >
           <View style={styles.contactIcon}>
             <Ionicons name="mail" size={24} color={Colors.primary} />
           </View>
           <View style={styles.contactContent}>
             <Text style={styles.contactLabel}>Email</Text>
-            <Text style={styles.contactValue}>contact@zidasolaire.bf</Text>
+            <Text style={styles.contactValue}>Boubacarzida71@gmail.com</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
         </TouchableOpacity>
@@ -225,7 +225,7 @@ export default function AboutScreen() {
           </View>
           <View style={styles.contactContent}>
             <Text style={styles.contactLabel}>Site web</Text>
-            <Text style={styles.contactValue}>www.zidasolaire.bf</Text>
+            <Text style={styles.contactValue}>https://zidasolaire.it.com/</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
         </TouchableOpacity>
@@ -254,7 +254,7 @@ export default function AboutScreen() {
 
           <TouchableOpacity
             style={styles.socialButton}
-            onPress={() => openLink('https://wa.me/22625506464')}
+            onPress={() => openLink('https://wa.me/22674339977')}
           >
             <Ionicons name="logo-whatsapp" size={28} color={Colors.white} />
           </TouchableOpacity>
