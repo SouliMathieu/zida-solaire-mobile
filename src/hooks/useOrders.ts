@@ -119,27 +119,55 @@ export const useCreateOrder = () => {
         notes: orderData.notes,
       });
 
+      const serverOrder = apiResponse.order;
+
       return {
-        id: apiResponse.orderNumber,
-        userId: '1',
-        items: items.map((item) => ({
-          productId: item.product.id,
-          productName: item.product.name,
+        id: serverOrder.orderNumber,
+        userId: 'customer',
+        items: (serverOrder.items || []).map((item: any) => ({
+          productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
-          price: item.product.price,
+          price: Number(item.price || 0),
         })),
-        totalAmount: getTotalPrice(),
-        status: 'EN_ATTENTE' as OrderStatus,
-        deliveryAddress: orderData.deliveryAddress,
-        phone: orderData.phone,
-        notes: orderData.notes,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        totalAmount: Number(
+          serverOrder.total ?? getTotalPrice()
+        ),
+        status:
+          STATUS_MAP[serverOrder.status] ||
+          'EN_ATTENTE',
+        deliveryAddress: [
+          serverOrder.deliveryAddress,
+          serverOrder.deliveryCity,
+        ]
+          .filter(Boolean)
+          .join(', '),
+        phone:
+          serverOrder.customerPhone ||
+          orderData.phone,
+        notes:
+          serverOrder.customerNotes ||
+          orderData.notes ||
+          undefined,
+        createdAt:
+          serverOrder.createdAt ||
+          new Date().toISOString(),
+        updatedAt:
+          serverOrder.updatedAt ||
+          new Date().toISOString(),
       } satisfies Order;
     },
     onSuccess: (order) => {
       addOrder(order);
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+
+      queryClient.invalidateQueries({
+        queryKey: ['orders'],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+      });
+
       clearCart();
     },
   });

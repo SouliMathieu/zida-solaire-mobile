@@ -74,8 +74,6 @@ export default function CheckoutScreen() {
     if (!validateForm()) return;
 
     try {
-      const submittedTotal = totalPrice;
-
       const createdOrder = await createOrder.mutateAsync({
         deliveryAddress: address,
         phone,
@@ -84,7 +82,7 @@ export default function CheckoutScreen() {
         notes: notes || undefined,
       });
 
-      setConfirmedTotal(submittedTotal);
+      setConfirmedTotal(createdOrder.totalAmount);
 
       Alert.alert(
         'Commande confirmée !',
