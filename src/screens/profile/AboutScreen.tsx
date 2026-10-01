@@ -218,7 +218,7 @@ export default function AboutScreen() {
 
         <TouchableOpacity
           style={styles.contactCard}
-          onPress={() => openLink('https://site-de-l-entreprise-zida-solaire-au-burkina.vercel.app')}
+          onPress={() => openLink('https://zidasolaire.it.com/')}
         >
           <View style={styles.contactIcon}>
             <Ionicons name="globe" size={24} color={Colors.primary} />
