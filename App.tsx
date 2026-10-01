@@ -1,11 +1,17 @@
 // App.tsx
 
 import React, { useEffect, useRef } from 'react';
+import { AppState, Platform } from 'react-native';
+import type { AppStateStatus } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  focusManager,
+} from '@tanstack/react-query';
 
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -14,7 +20,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     },
   },
 });
@@ -30,25 +36,72 @@ function openPushDestination(data: PushData) {
 
   switch (data.route) {
     case 'OrdersArea':
-      navigationRef.navigate('Compte', { screen: 'OrdersArea' });
+    case 'Orders':
+    case 'OrderDetail':
+      navigationRef.navigate('Profil', {
+        screen: 'OrdersArea',
+      });
       break;
+
     case 'Installations':
-      navigationRef.navigate('Mon énergie', { screen: 'Installations' });
+    case 'Installation':
+    case 'InstallationDetail':
+      navigationRef.navigate('Profil', {
+        screen: 'Installations',
+      });
       break;
+
     case 'RepairTickets':
-      navigationRef.navigate('Assistance', { screen: 'RepairTickets' });
+    case 'RepairTicketDetail':
+    case 'RepairRequest':
+      navigationRef.navigate('Assistance', {
+        screen: 'RepairTickets',
+      });
       break;
+
+    case 'InstallationRequest':
+      navigationRef.navigate('Assistance', {
+        screen: 'InstallationRequest',
+      });
+      break;
+
+    case 'Contact':
+      navigationRef.navigate('Assistance', {
+        screen: 'Contact',
+      });
+      break;
+
     default:
-      navigationRef.navigate('Compte', { screen: 'Notifications' });
+      navigationRef.navigate('Profil', {
+        screen: 'Notifications',
+      });
       break;
   }
 
-  queryClient.invalidateQueries({ queryKey: ['customer-notifications'] });
+  queryClient.invalidateQueries({
+    queryKey: ['notifications'],
+  });
+
   return true;
+}
+
+function onAppStateChange(status: AppStateStatus) {
+  if (Platform.OS !== 'web') {
+    focusManager.setFocused(status === 'active');
+  }
 }
 
 export default function App() {
   const pendingPush = useRef<PushData | null>(null);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      'change',
+      onAppStateChange
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     const handleResponse = (response: Notifications.NotificationResponse | null) => {

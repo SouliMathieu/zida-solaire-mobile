@@ -2,15 +2,21 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Linking, Alert } from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotificationPreferences, useNotifications, useUpdateNotificationPreferences } from '../../hooks/useNotifications';
 import { CustomerNotification, NotificationPreferences } from '../../services/api';
 import { disablePushNotifications, enablePushNotifications } from '../../services/pushNotifications';
+import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 
 const ICONS: Record<string, string> = { order: 'receipt-outline', installation: 'construct-outline', sav: 'chatbubbles-outline', system: 'notifications-outline' };
 
 export default function NotificationsScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+
   const feed = useNotifications();
   const prefs = useNotificationPreferences();
   const markRead = useMarkNotificationRead();
@@ -22,6 +28,61 @@ export default function NotificationsScreen() {
   const refreshing = feed.isRefetching || prefs.isRefetching;
 
   const toggle = (key: keyof NotificationPreferences, value: boolean) => updatePrefs.mutate({ [key]: value });
+
+  const handleNotificationPress = (item: CustomerNotification) => {
+    if (!item.readAt) {
+      markRead.mutate(item.id);
+    }
+
+    if (
+      item.route === 'OrdersArea' ||
+      item.route === 'Orders' ||
+      item.route === 'OrderDetail' ||
+      item.type === 'order'
+    ) {
+      navigation.navigate('OrdersArea');
+      return;
+    }
+
+    if (
+      item.route === 'Installations' ||
+      item.route === 'Installation' ||
+      item.route === 'InstallationDetail' ||
+      item.type === 'installation'
+    ) {
+      navigation.navigate('Installations');
+      return;
+    }
+
+    if (
+      item.route === 'RepairTickets' ||
+      item.route === 'RepairTicketDetail' ||
+      item.route === 'RepairRequest' ||
+      item.type === 'sav'
+    ) {
+      (navigation.getParent() as any)?.navigate(
+        'Assistance',
+        { screen: 'RepairTickets' }
+      );
+      return;
+    }
+
+    if (item.route === 'InstallationRequest') {
+      (navigation.getParent() as any)?.navigate(
+        'Assistance',
+        { screen: 'InstallationRequest' }
+      );
+      return;
+    }
+
+    if (item.route === 'Contact') {
+      (navigation.getParent() as any)?.navigate(
+        'Assistance',
+        { screen: 'Contact' }
+      );
+      return;
+    }
+  };
 
   const togglePush = async (value: boolean) => {
     if (pushBusy) return;
@@ -69,16 +130,56 @@ export default function NotificationsScreen() {
       </View>
 
       {feed.isLoading ? (
-        <View style={styles.loadingCard}><ActivityIndicator color={Colors.primary} /></View>
+        <View style={styles.loadingCard}>
+          <ActivityIndicator color={Colors.primary} />
+        </View>
+      ) : feed.isError ? (
+        <View style={styles.emptyCard}>
+          <Ionicons
+            name="cloud-offline-outline"
+            size={36}
+            color={Colors.warning}
+          />
+          <Text style={styles.emptyTitle}>
+            Impossible de charger l’activité
+          </Text>
+          <Text style={styles.emptyText}>
+            Vérifiez votre connexion puis réessayez.
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => feed.refetch()}
+          >
+            <Text style={styles.retryButtonText}>
+              Réessayer
+            </Text>
+          </TouchableOpacity>
+        </View>
       ) : notifications.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Ionicons name="checkmark-circle-outline" size={36} color={Colors.success} />
-          <Text style={styles.emptyTitle}>Tout est calme</Text>
-          <Text style={styles.emptyText}>Les prochains changements de commande, installation ou assistance apparaîtront ici.</Text>
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={36}
+            color={Colors.success}
+          />
+          <Text style={styles.emptyTitle}>
+            Tout est calme
+          </Text>
+          <Text style={styles.emptyText}>
+            Les prochains changements de commande,
+            installation ou assistance apparaîtront ici.
+          </Text>
         </View>
       ) : (
         <View style={styles.card}>
-          {notifications.map((item, index) => <ActivityRow key={item.id} item={item} last={index === notifications.length - 1} onPress={() => !item.readAt && markRead.mutate(item.id)} />)}
+          {notifications.map((item, index) => (
+            <ActivityRow
+              key={item.id}
+              item={item}
+              last={index === notifications.length - 1}
+              onPress={() => handleNotificationPress(item)}
+            />
+          ))}
         </View>
       )}
 
@@ -159,5 +260,16 @@ const styles = StyleSheet.create({
   preferenceTitle: { color: Colors.text, fontWeight: '800', fontSize: 13 },
   preferenceSubtitle: { color: Colors.textSecondary, fontSize: 11, marginTop: 3, paddingRight: 8 },
   systemButton: { height: 50, borderRadius: Radius.md, borderWidth: 1, borderColor: '#D6E1EB', backgroundColor: Colors.white, marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+  },
+  retryButtonText: {
+    color: Colors.white,
+    fontWeight: '900',
+  },
   systemButtonText: { color: Colors.secondary, fontWeight: '800', marginLeft: 8, fontSize: 13 },
 });

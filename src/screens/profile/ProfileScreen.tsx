@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQueryClient } from '@tanstack/react-query';
 import { Colors } from '../../constants/colors';
 import { useUserStore } from '../../store/userStore';
 import { useCartStore } from '../../store/cartStore';
@@ -17,6 +18,7 @@ type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
 export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated, logout } = useUserStore();
   const cartCount = useCartStore((state) => state.getTotalItems());
   const { data: syncedOrders = [] } = useOrders();
@@ -25,8 +27,31 @@ export default function ProfileScreen() {
   const unreadCount = notifications.data?.unreadCount || 0;
 
   const handleLogout = async () => {
-    await revokePushTokenOnLogout();
+    try {
+      await revokePushTokenOnLogout();
+    } catch (error) {
+      console.warn('Push token revoke failed:', error);
+    }
+
+    await Promise.all([
+      queryClient.cancelQueries({ queryKey: ['profile'] }),
+      queryClient.cancelQueries({ queryKey: ['orders'] }),
+      queryClient.cancelQueries({ queryKey: ['order'] }),
+      queryClient.cancelQueries({ queryKey: ['notifications'] }),
+      queryClient.cancelQueries({ queryKey: ['notification-preferences'] }),
+      queryClient.cancelQueries({ queryKey: ['customer-installations'] }),
+      queryClient.cancelQueries({ queryKey: ['customer-repairs'] }),
+    ]);
+
     logout();
+
+    queryClient.removeQueries({ queryKey: ['profile'] });
+    queryClient.removeQueries({ queryKey: ['orders'] });
+    queryClient.removeQueries({ queryKey: ['order'] });
+    queryClient.removeQueries({ queryKey: ['notifications'] });
+    queryClient.removeQueries({ queryKey: ['notification-preferences'] });
+    queryClient.removeQueries({ queryKey: ['customer-installations'] });
+    queryClient.removeQueries({ queryKey: ['customer-repairs'] });
   };
 
   if (!isAuthenticated()) {

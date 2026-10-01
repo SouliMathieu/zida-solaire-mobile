@@ -30,7 +30,9 @@ function mapCustomerOrder(item: any): Order {
     })),
     totalAmount: Number(item.total || 0),
     status: STATUS_MAP[item.status] || 'EN_ATTENTE',
-    deliveryAddress: [item.deliveryAddress, item.deliveryCity].filter(Boolean).join(', '),
+    deliveryAddress: [item.deliveryAddress, item.deliveryCity]
+      .filter(Boolean)
+      .join(', '),
     phone: item.customerPhone || '',
     notes: item.customerNotes || undefined,
     createdAt: item.createdAt,
@@ -40,30 +42,34 @@ function mapCustomerOrder(item: any): Order {
 
 export const useOrders = () => {
   const getOrders = useOrdersStore((state) => state.getOrders);
-  const authenticated = useUserStore((state) => !!state.user && !!state.token);
+  const userId = useUserStore((state) => state.user?.id ?? null);
+  const authenticated = useUserStore(
+    (state) => !!state.user && !!state.token
+  );
 
   return useQuery<Order[]>({
-    queryKey: ['orders', authenticated ? 'server' : 'local'],
+    queryKey: ['orders', userId],
+    enabled: authenticated,
     queryFn: async () => {
-      if (authenticated && !USE_MOCK_DATA) {
-        try {
-          const serverOrders = await fetchCustomerOrders();
-          return serverOrders.map(mapCustomerOrder);
-        } catch (error) {
-          console.warn('Customer order sync unavailable, using local history.', error);
-        }
+      if (USE_MOCK_DATA) {
+        return getOrders();
       }
-      return getOrders();
+
+      const serverOrders = await fetchCustomerOrders();
+      return serverOrders.map(mapCustomerOrder);
     },
   });
 };
 
 export const useOrder = (id: string) => {
   const { data: orders = [] } = useOrders();
+  const userId = useUserStore((state) => state.user?.id ?? null);
+
   return useQuery<Order | undefined>({
-    queryKey: ['order', id, orders.length],
-    queryFn: async () => orders.find((order: Order) => order.id === id),
-    enabled: !!id,
+    queryKey: ['order', userId, id, orders.length],
+    queryFn: async () =>
+      orders.find((order: Order) => order.id === id),
+    enabled: !!id && !!userId,
   });
 };
 
@@ -157,6 +163,7 @@ export const useCreateOrder = () => {
           new Date().toISOString(),
       } satisfies Order;
     },
+
     onSuccess: (order) => {
       addOrder(order);
 

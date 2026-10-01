@@ -67,17 +67,20 @@ export const useVerifyPhoneChangeOtp = () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['customer-installations'] });
       queryClient.invalidateQueries({ queryKey: ['customer-repairs'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
     },
   });
 };
 
 export const useProfile = () => {
   const token = useUserStore((state) => state.token);
+  const userId = useUserStore((state) => state.user?.id ?? null);
 
   return useQuery({
-    queryKey: ['profile'],
+    queryKey: ['profile', userId],
     queryFn: getCustomerProfile,
-    enabled: !!token,
+    enabled: !!token && !!userId,
   });
 };
 

@@ -37,7 +37,12 @@ const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR'
 
 export default function OrdersScreen() {
   const navigation = useNavigation<Nav>();
-  const { data: orders = [], refetch } = useOrders();
+  const {
+    data: orders = [],
+    refetch,
+    isError,
+    isRefetching,
+  } = useOrders();
 
   return (
     <View style={styles.container}>
@@ -46,7 +51,7 @@ export default function OrdersScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshing={false}
+        refreshing={isRefetching}
         onRefresh={refetch}
         ListHeaderComponent={
           <>
@@ -64,11 +69,53 @@ export default function OrdersScreen() {
           </>
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}><Ionicons name="bag-handle-outline" size={38} color={Colors.primary} /></View>
-            <Text style={styles.emptyTitle}>Aucune commande pour le moment</Text>
-            <Text style={styles.emptyText}>Vos prochaines commandes ZIDA apparaîtront ici automatiquement.</Text>
-          </View>
+          isError ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Ionicons
+                  name="cloud-offline-outline"
+                  size={38}
+                  color={Colors.warning}
+                />
+              </View>
+
+              <Text style={styles.emptyTitle}>
+                Impossible de charger vos commandes
+              </Text>
+
+              <Text style={styles.emptyText}>
+                La synchronisation avec votre compte ZIDA a échoué.
+                Vérifiez votre connexion puis réessayez.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => refetch()}
+              >
+                <Text style={styles.retryButtonText}>
+                  Réessayer
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Ionicons
+                  name="bag-handle-outline"
+                  size={38}
+                  color={Colors.primary}
+                />
+              </View>
+
+              <Text style={styles.emptyTitle}>
+                Aucune commande pour le moment
+              </Text>
+
+              <Text style={styles.emptyText}>
+                Vos prochaines commandes ZIDA apparaîtront ici automatiquement.
+              </Text>
+            </View>
+          )
         }
         renderItem={({ item }: { item: Order }) => (
           <TouchableOpacity style={styles.orderCard} onPress={() => navigation.navigate('OrderDetail', { order: item })} activeOpacity={0.84}>
@@ -131,4 +178,15 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 78, height: 78, borderRadius: 39, backgroundColor: '#FFF3EC', alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { color: Colors.text, fontSize: Typography.h3, fontWeight: '900', marginTop: 16, textAlign: 'center' },
   emptyText: { color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, marginTop: 7 },
+  retryButton: {
+    marginTop: 18,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+    borderRadius: Radius.md,
+  },
+  retryButtonText: {
+    color: Colors.white,
+    fontWeight: '900',
+  },
 });
