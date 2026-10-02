@@ -31,52 +31,65 @@ type PushData = {
   entityId?: string;
 };
 
-function openPushDestination(data: PushData) {
-  if (!navigationRef.isReady()) return false;
+type PushDestination = {
+  tab: 'Profil' | 'Assistance';
+  screen: string;
+};
 
+function getPushDestination(data: PushData): PushDestination | null {
   switch (data.route) {
     case 'OrdersArea':
     case 'Orders':
     case 'OrderDetail':
-      navigationRef.navigate('Profil', {
+      return {
+        tab: 'Profil',
         screen: 'OrdersArea',
-      });
-      break;
+      };
 
     case 'Installations':
     case 'Installation':
     case 'InstallationDetail':
-      navigationRef.navigate('Profil', {
+      return {
+        tab: 'Profil',
         screen: 'Installations',
-      });
-      break;
+      };
 
     case 'RepairTickets':
     case 'RepairTicketDetail':
     case 'RepairRequest':
-      navigationRef.navigate('Assistance', {
+      return {
+        tab: 'Assistance',
         screen: 'RepairTickets',
-      });
-      break;
+      };
 
     case 'InstallationRequest':
-      navigationRef.navigate('Assistance', {
+      return {
+        tab: 'Assistance',
         screen: 'InstallationRequest',
-      });
-      break;
+      };
 
     case 'Contact':
-      navigationRef.navigate('Assistance', {
+      return {
+        tab: 'Assistance',
         screen: 'Contact',
-      });
-      break;
+      };
 
     default:
-      // Never redirect the user just because a notification response
-      // has no recognized destination. This is especially important
-      // for stale/partial Android notification responses restored at startup.
-      return false;
+      return null;
   }
+}
+
+function openPushDestination(data: PushData) {
+  const destination = getPushDestination(data);
+
+  if (!destination || !navigationRef.isReady()) {
+    return false;
+  }
+
+  navigationRef.navigate(destination.tab, {
+    screen: destination.screen,
+    initial: false,
+  });
 
   queryClient.invalidateQueries({
     queryKey: ['notifications'],
@@ -95,6 +108,15 @@ export default function App() {
   const pendingPush = useRef<PushData | null>(null);
 
   useEffect(() => {
+    const subscription = AppState.addEventListener(
+      'change',
+      onAppStateChange
+    );
+
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
     const INITIAL_NOTIFICATION_MAX_AGE_MS = 60 * 60 * 1000;
 
     // Android/Expo can deliver the response restored at process startup
@@ -103,6 +125,12 @@ export default function App() {
     let startupResolved = false;
     const queuedResponses: Notifications.NotificationResponse[] = [];
     const processedIdentifiers = new Set<string>();
+
+    const clearLastResponse = () => {
+      Notifications.clearLastNotificationResponseAsync().catch(
+        () => undefined
+      );
+    };
 
     const normalizeTimestamp = (value: unknown) => {
       const timestamp =
@@ -177,14 +205,13 @@ export default function App() {
         Notifications.DEFAULT_ACTION_IDENTIFIER
       ) {
         processedIdentifiers.add(identifier);
+        clearLastResponse();
         return;
       }
 
       if (!allowStale && !isFreshInitialResponse(response)) {
         processedIdentifiers.add(identifier);
-        Notifications.clearLastNotificationResponseAsync().catch(
-          () => undefined
-        );
+        clearLastResponse();
         return;
       }
 
@@ -193,15 +220,22 @@ export default function App() {
 
       processedIdentifiers.add(identifier);
 
-      // An old or incomplete notification response must never change
-      // the initial navigation state. Only recognized push routes navigate.
-      if (!openPushDestination(data)) {
+      // Unknown, empty or partial payloads are consumed but never navigate.
+      if (!getPushDestination(data)) {
+        clearLastResponse();
         return;
       }
 
-      Notifications.clearLastNotificationResponseAsync().catch(
-        () => undefined
-      );
+      // A valid user-selected destination may arrive before React Navigation
+      // is ready on a cold start. Keep only that validated destination in
+      // memory and replay it once onReady fires.
+      if (!openPushDestination(data)) {
+        pendingPush.current = data;
+      }
+
+      // The native response has now been consumed (opened or queued), so it
+      // must not survive into a later normal application start.
+      clearLastResponse();
     };
 
     const handleResponse = (
@@ -258,12 +292,13 @@ export default function App() {
           error
         );
 
-        // If the native lookup fails, do not block the app forever.
-        // Any queued event is then treated as a real interaction.
+        // If the native startup lookup fails, treat queued startup events
+        // conservatively. A recent valid tap can still navigate, while a
+        // stale restored response cannot become an automatic redirect.
         startupResolved = true;
 
         for (const response of queuedResponses) {
-          processResponse(response, true);
+          processResponse(response, false);
         }
 
         queuedResponses.length = 0;

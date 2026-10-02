@@ -36,7 +36,7 @@ export default function HomeStackNavigator() {
             onNotifications={() =>
               (navigation.getParent() as any)?.navigate(
                 'Profil',
-                { screen: 'Notifications' }
+                { screen: 'Notifications', initial: false }
               )
             }
             onCart={() =>

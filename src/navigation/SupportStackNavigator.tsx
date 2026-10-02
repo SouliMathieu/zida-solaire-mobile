@@ -37,7 +37,7 @@ export default function SupportStackNavigator() {
             onNotifications={() =>
               (navigation.getParent() as any)?.navigate(
                 'Profil',
-                { screen: 'Notifications' }
+                { screen: 'Notifications', initial: false }
               )
             }
             onCart={() =>

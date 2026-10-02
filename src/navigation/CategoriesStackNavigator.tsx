@@ -31,7 +31,7 @@ export default function CategoriesStackNavigator() {
             onNotifications={() =>
               (navigation.getParent() as any)?.navigate(
                 'Profil',
-                { screen: 'Notifications' }
+                { screen: 'Notifications', initial: false }
               )
             }
             onCart={() =>
