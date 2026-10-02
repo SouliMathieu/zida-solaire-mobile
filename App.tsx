@@ -25,11 +25,55 @@ const queryClient = new QueryClient({
   },
 });
 
+const INITIAL_NOTIFICATION_MAX_AGE_MS = 60 * 60 * 1000;
+
 type PushData = {
   route?: string;
   entityType?: string;
   entityId?: string;
 };
+
+function normalizeTimestamp(value: unknown) {
+  const timestamp = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
+  return timestamp < 1_000_000_000_000
+    ? timestamp * 1000
+    : timestamp;
+}
+
+function getNotificationTimestamp(
+  response: Notifications.NotificationResponse
+) {
+  const data = response.notification.request.content.data as
+    | Record<string, unknown>
+    | undefined;
+
+  const dataTimestamp = normalizeTimestamp(data?.timestamp);
+  if (dataTimestamp) return dataTimestamp;
+
+  return normalizeTimestamp(response.notification.date);
+}
+
+function isFreshInitialResponse(
+  response: Notifications.NotificationResponse
+) {
+  if (
+    response.actionIdentifier !==
+    Notifications.DEFAULT_ACTION_IDENTIFIER
+  ) {
+    return false;
+  }
+
+  const timestamp = getNotificationTimestamp(response);
+  if (!timestamp) return false;
+
+  const age = Date.now() - timestamp;
+
+  return (
+    age >= -60_000 &&
+    age <= INITIAL_NOTIFICATION_MAX_AGE_MS
+  );
+}
 
 function openPushDestination(data: PushData) {
   if (!navigationRef.isReady()) return false;
@@ -104,18 +148,47 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const handleResponse = (response: Notifications.NotificationResponse | null) => {
+    const handleResponse = (
+      response: Notifications.NotificationResponse | null
+    ) => {
       if (!response) return;
-      const data = response.notification.request.content.data as PushData;
-      if (!openPushDestination(data)) pendingPush.current = data;
-      Notifications.clearLastNotificationResponseAsync().catch(() => undefined);
+
+      const data =
+        response.notification.request.content.data as PushData;
+
+      if (!openPushDestination(data)) {
+        pendingPush.current = data;
+      }
+
+      Notifications.clearLastNotificationResponseAsync().catch(
+        () => undefined
+      );
     };
 
-    const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    const subscription =
+      Notifications.addNotificationResponseReceivedListener(
+        handleResponse
+      );
 
     Notifications.getLastNotificationResponseAsync()
-      .then(handleResponse)
-      .catch((error) => console.warn('Unable to read last notification response:', error));
+      .then((response) => {
+        if (!response) return;
+
+        if (!isFreshInitialResponse(response)) {
+          Notifications.clearLastNotificationResponseAsync().catch(
+            () => undefined
+          );
+          return;
+        }
+
+        handleResponse(response);
+      })
+      .catch((error) =>
+        console.warn(
+          'Unable to read last notification response:',
+          error
+        )
+      );
 
     return () => subscription.remove();
   }, []);
