@@ -11,7 +11,7 @@ import { useUserStore } from '../../store/userStore';
 
 type Nav = NativeStackNavigationProp<SupportStackParamList, 'SupportHome'>;
 
-const phone = '+22625506464';
+const phone = '+22674339977';
 const whatsapp = '22674339977';
 
 
