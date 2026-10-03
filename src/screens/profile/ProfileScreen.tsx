@@ -1,5 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -11,28 +18,28 @@ import { useCartStore } from '../../store/cartStore';
 import { useOrders } from '../../hooks/useOrders';
 import { useNotifications } from '../../hooks/useNotifications';
 import { revokePushTokenOnLogout } from '../../services/pushNotifications';
+import { deleteCustomerAccount } from '../../services/account';
 import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
+import { StyleSheet } from 'react-native';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
+
+const PRIVACY_URL = 'https://zidasolaire.it.com/politique-de-confidentialite';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
   const queryClient = useQueryClient();
   const { user, isAuthenticated, logout } = useUserStore();
+  const clearCart = useCartStore((state) => state.clearCart);
   const cartCount = useCartStore((state) => state.getTotalItems());
   const { data: syncedOrders = [] } = useOrders();
   const orderCount = syncedOrders.length;
   const notifications = useNotifications();
   const unreadCount = notifications.data?.unreadCount || 0;
+  const [deleting, setDeleting] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await revokePushTokenOnLogout();
-    } catch (error) {
-      console.warn('Push token revoke failed:', error);
-    }
-
+  const clearCustomerQueries = async () => {
     await Promise.all([
       queryClient.cancelQueries({ queryKey: ['profile'] }),
       queryClient.cancelQueries({ queryKey: ['orders'] }),
@@ -43,8 +50,6 @@ export default function ProfileScreen() {
       queryClient.cancelQueries({ queryKey: ['customer-repairs'] }),
     ]);
 
-    logout();
-
     queryClient.removeQueries({ queryKey: ['profile'] });
     queryClient.removeQueries({ queryKey: ['orders'] });
     queryClient.removeQueries({ queryKey: ['order'] });
@@ -52,6 +57,64 @@ export default function ProfileScreen() {
     queryClient.removeQueries({ queryKey: ['notification-preferences'] });
     queryClient.removeQueries({ queryKey: ['customer-installations'] });
     queryClient.removeQueries({ queryKey: ['customer-repairs'] });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await revokePushTokenOnLogout();
+    } catch (error) {
+      console.warn('Push token revoke failed:', error);
+    }
+
+    await clearCustomerQueries();
+    logout();
+  };
+
+  const performDeleteAccount = async () => {
+    if (deleting) return;
+
+    setDeleting(true);
+
+    try {
+      try {
+        await revokePushTokenOnLogout();
+      } catch (error) {
+        console.warn('Push token revoke before account deletion failed:', error);
+      }
+
+      await deleteCustomerAccount();
+      await clearCustomerQueries();
+      clearCart();
+      logout();
+
+      Alert.alert(
+        'Compte supprimé',
+        'Votre compte ZIDA et vos données personnelles ont été supprimés.'
+      );
+    } catch (error: any) {
+      Alert.alert(
+        'Suppression du compte',
+        error.response?.data?.error ||
+          'Impossible de supprimer votre compte pour le moment.'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Supprimer définitivement mon compte ?',
+      'Cette action est irréversible. Vos données personnelles seront supprimées ou anonymisées lorsque leur conservation est nécessaire pour les obligations commerciales et légales.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer mon compte',
+          style: 'destructive',
+          onPress: performDeleteAccount,
+        },
+      ]
+    );
   };
 
   if (!isAuthenticated()) {
@@ -93,12 +156,7 @@ export default function ProfileScreen() {
 
       <Text style={styles.sectionTitle}>Services</Text>
       <View style={styles.cardGroup}>
-        <MenuRow
-          icon="home-outline"
-          title="Mes installations"
-          subtitle="Suivre mes demandes, rendez-vous et travaux"
-          onPress={() => navigation.navigate('Installations')}
-        />
+        <MenuRow icon="home-outline" title="Mes installations" subtitle="Suivre mes demandes, rendez-vous et travaux" onPress={() => navigation.navigate('Installations')} />
         <MenuRow icon="notifications-outline" title="Activité & notifications" subtitle={unreadCount > 0 ? `${unreadCount} mise${unreadCount > 1 ? 's' : ''} à jour non lue${unreadCount > 1 ? 's' : ''}` : 'Tout est à jour'} badge={unreadCount} onPress={() => navigation.navigate('Notifications')} />
         <MenuRow icon="receipt-outline" title="Mes commandes" subtitle="Suivre mes commandes" onPress={() => navigation.navigate('OrdersArea')} />
         <MenuRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''} en attente`} onPress={() => navigation.navigate('CartArea')} />
@@ -110,6 +168,7 @@ export default function ProfileScreen() {
       <Text style={styles.sectionTitle}>Mon compte</Text>
       <View style={styles.cardGroup}>
         <MenuRow icon="person-outline" title="Mes informations" subtitle="Modifier mes coordonnées" onPress={() => navigation.navigate('EditProfile')} />
+        <MenuRow icon="shield-checkmark-outline" title="Politique de confidentialité" subtitle="Consulter l'utilisation et la protection de vos données" onPress={() => Linking.openURL(PRIVACY_URL)} />
         <MenuRow icon="mail-outline" title="Nous contacter" subtitle="Questions commerciales ou techniques" onPress={() => navigation.navigate('Contact')} />
         <MenuRow icon="information-circle-outline" title="À propos de ZIDA" subtitle="Entreprise, services et informations" onPress={() => navigation.navigate('About')} last />
       </View>
@@ -117,6 +176,17 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color={Colors.error} />
         <Text style={styles.logoutText}>Se déconnecter</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.deleteButton, deleting && styles.deleteButtonDisabled]}
+        onPress={handleDeleteAccount}
+        disabled={deleting}
+      >
+        <Ionicons name="trash-outline" size={20} color={Colors.error} />
+        <Text style={styles.deleteText}>
+          {deleting ? 'Suppression...' : 'Supprimer mon compte'}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -174,4 +244,7 @@ const styles = StyleSheet.create({
   menuBadgeText: { color: Colors.white, fontSize: 10, fontWeight: '900' },
   logoutButton: { height: 52, borderRadius: Radius.md, borderWidth: 1, borderColor: '#F0C5C5', backgroundColor: '#FFF8F8', marginTop: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   logoutText: { color: Colors.error, fontWeight: '900', marginLeft: 8 },
+  deleteButton: { height: 52, borderRadius: Radius.md, marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  deleteButtonDisabled: { opacity: 0.6 },
+  deleteText: { color: Colors.error, fontWeight: '800', marginLeft: 8 },
 });
