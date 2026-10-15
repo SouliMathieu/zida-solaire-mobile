@@ -13,6 +13,7 @@ import { useCartStore } from '../../store/cartStore';
 interface ProductCardProps {
   product: Product;
   onPress?: () => void;
+  highlightQuery?: string;
 }
 
 const { width } = Dimensions.get('window');
@@ -25,7 +26,15 @@ const formatPrice = (price: number) =>
     minimumFractionDigits: 0,
   }).format(price);
 
-export default function ProductCard({ product, onPress }: ProductCardProps) {
+function highlightMatches(value: string, query: string): React.ReactNode {
+  const term = query.trim();
+  if (!term) return value;
+  const index = value.toLocaleLowerCase().indexOf(term.toLocaleLowerCase());
+  if (index < 0) return value;
+  return <>{value.slice(0, index)}<Text style={styles.highlight}>{value.slice(index, index + term.length)}</Text>{highlightMatches(value.slice(index + term.length), term)}</>;
+}
+
+export default function ProductCard({ product, onPress, highlightQuery = '' }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
   const cartItem = useCartStore((state) => state.getItem(product.id));
   const productImage = product.images?.[0] || product.image || 'https://via.placeholder.com/300';
@@ -56,9 +65,9 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
 
       <View style={styles.content}>
         {!!product.category?.name && <Text style={styles.category}>{product.category.name}</Text>}
-        <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
+        <Text style={styles.name} numberOfLines={2}>{highlightMatches(product.name, highlightQuery)}</Text>
         {!!product.shortDescription && (
-          <Text style={styles.description} numberOfLines={2}>{product.shortDescription}</Text>
+          <Text style={styles.description} numberOfLines={2}>{highlightMatches(product.shortDescription, highlightQuery)}</Text>
         )}
 
         <View style={styles.priceBlock}>
@@ -99,6 +108,7 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
 }
 
 const styles = StyleSheet.create({
+  highlight: { backgroundColor: '#FDE047', color: '#111827', fontWeight: '900' },
   card: {
     width: cardWidth,
     backgroundColor: Colors.white,
