@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from '../../constants/colors';
 import { Order } from '../../types';
+import { useUserStore } from '../../store/userStore';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 
 type Route = RouteProp<{ OrderDetail: { order: Order } }, 'OrderDetail'>;
@@ -36,6 +37,7 @@ export default function OrderDetailScreen() {
   const route = useRoute<Route>();
   const navigation = useNavigation<any>();
   const { order } = route.params;
+  const authenticated = useUserStore((state) => !!state.user && !!state.token);
 
   const goToSupport = () => {
     navigation.getParent()?.navigate('Contact');
@@ -59,7 +61,7 @@ export default function OrderDetailScreen() {
 
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={22} color={Colors.info} />
-        <Text style={styles.noticeText}>Cette commande est synchronisée avec votre compte ZIDA. Son statut évoluera au fur et à mesure de son traitement.</Text>
+        <Text style={styles.noticeText}>{authenticated && order.userId !== 'guest' ? 'Commande associée à votre compte ZIDA. Consultez « Mes commandes » pour actualiser son statut.' : 'Commande enregistrée sur cet appareil. Conservez sa référence ; pour demander son état, contactez ZIDA SOLAIRE. Le statut affiché ici n’est pas mis à jour automatiquement.'}</Text>
       </View>
 
       <Section title="Articles">
