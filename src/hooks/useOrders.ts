@@ -30,6 +30,7 @@ function mapCustomerOrder(item: any): Order {
     })),
     totalAmount: Number(item.total || 0),
     status: STATUS_MAP[item.status] || 'EN_ATTENTE',
+    fulfillmentMethod: item.fulfillmentMethod === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
     deliveryAddress: [item.deliveryAddress, item.deliveryCity]
       .filter(Boolean)
       .join(', '),
@@ -90,6 +91,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: async (orderData: {
       deliveryAddress: string;
+      fulfillmentMethod?: 'DELIVERY' | 'PICKUP';
       phone: string;
       customerName?: string;
       customerEmail?: string;
@@ -114,7 +116,8 @@ export const useCreateOrder = () => {
           })),
           totalAmount: getTotalPrice(),
           status: 'EN_ATTENTE' as OrderStatus,
-          deliveryAddress: orderData.deliveryAddress,
+          deliveryAddress: orderData.fulfillmentMethod === 'PICKUP' ? 'Retrait chez ZIDA SOLAIRE' : orderData.deliveryAddress,
+          fulfillmentMethod: orderData.fulfillmentMethod || 'DELIVERY',
           phone: orderData.phone,
           notes: orderData.notes,
           createdAt: new Date().toISOString(),
@@ -128,6 +131,7 @@ export const useCreateOrder = () => {
         customerEmail: orderData.customerEmail,
         customerPhone: orderData.phone,
         deliveryAddress: orderData.deliveryAddress,
+        fulfillmentMethod: orderData.fulfillmentMethod || 'DELIVERY',
         paymentMethod: 'CASH',
         notes: orderData.notes,
       });
@@ -149,6 +153,7 @@ export const useCreateOrder = () => {
         status:
           STATUS_MAP[serverOrder.status] ||
           'EN_ATTENTE',
+        fulfillmentMethod: serverOrder.fulfillmentMethod === 'PICKUP' ? 'PICKUP' : 'DELIVERY',
         deliveryAddress: [
           serverOrder.deliveryAddress,
           serverOrder.deliveryCity,
