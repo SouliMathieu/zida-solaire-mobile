@@ -16,7 +16,7 @@ const STATUS_LABELS: Record<string, string> = {
   EN_ATTENTE: 'En attente',
   CONFIRMEE: 'Confirmée',
   EN_PREPARATION: 'En préparation',
-  PRETE: 'Prête',
+  PRETE: 'Prête à récupérer',
   EN_LIVRAISON: 'En livraison',
   EXPEDIEE: 'Expédiée',
   LIVREE: 'Livrée',
@@ -53,7 +53,7 @@ export default function OrderDetailScreen() {
             <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor(order.status)}18` }]}>
-            <Text style={[styles.statusText, { color: statusColor(order.status) }]}>{STATUS_LABELS[order.status] || order.status}</Text>
+            <Text style={[styles.statusText, { color: statusColor(order.status) }]}>{order.status === 'LIVREE' && order.fulfillmentMethod === 'PICKUP' ? 'Retirée' : STATUS_LABELS[order.status] || order.status}</Text>
           </View>
         </View>
         <Text style={styles.heroTotal}>{formatPrice(order.totalAmount)}</Text>
@@ -61,7 +61,7 @@ export default function OrderDetailScreen() {
 
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={22} color={Colors.info} />
-        <Text style={styles.noticeText}>{authenticated && order.userId !== 'guest' ? 'Commande associée à votre compte ZIDA. Consultez « Mes commandes » pour actualiser son statut.' : 'Commande enregistrée sur cet appareil. Conservez sa référence ; pour demander son état, contactez ZIDA SOLAIRE. Le statut affiché ici n’est pas mis à jour automatiquement.'}{order.fulfillmentMethod === 'PICKUP' ? ' Pour un retrait, attendez que ZIDA vous prévienne avant de vous déplacer.' : ''}</Text>
+        <Text style={styles.noticeText}>{authenticated && order.userId !== 'guest' ? 'Commande associée à votre compte ZIDA. Consultez « Mes commandes » pour actualiser son statut.' : 'Commande enregistrée sur cet appareil. Conservez sa référence ; pour demander son état, contactez ZIDA SOLAIRE. Le statut affiché ici n’est pas mis à jour automatiquement.'}{order.fulfillmentMethod === 'PICKUP' ? order.status === 'PRETE' ? ' ZIDA indique que la commande est prête. Contactez ZIDA pour confirmer les modalités exactes du retrait avant de vous déplacer.' : ' Pour un retrait, attendez que ZIDA vous prévienne avant de vous déplacer.' : ''}</Text>
       </View>
 
       <Section title="Articles">
