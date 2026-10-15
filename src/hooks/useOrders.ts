@@ -41,6 +41,7 @@ function mapCustomerOrder(item: any): Order {
 }
 
 export const useOrders = () => {
+  const localOrders = useOrdersStore((state) => state.orders);
   const getOrders = useOrdersStore((state) => state.getOrders);
   const userId = useUserStore((state) => state.user?.id ?? null);
   const authenticated = useUserStore(
@@ -48,15 +49,21 @@ export const useOrders = () => {
   );
 
   return useQuery<Order[]>({
-    queryKey: ['orders', userId],
-    enabled: authenticated,
+    queryKey: ['orders', userId, authenticated, localOrders],
+    enabled: true,
     queryFn: async () => {
-      if (USE_MOCK_DATA) {
-        return getOrders();
-      }
+      if (USE_MOCK_DATA) return getOrders();
+
+      // Guest checkout orders remain available on this device.
+      if (!authenticated) return getOrders().filter((order) => order.userId === 'guest');
 
       const serverOrders = await fetchCustomerOrders();
-      return serverOrders.map(mapCustomerOrder);
+      const synced = serverOrders.map(mapCustomerOrder);
+      // Keep local copies of orders made while logged in on this device.
+      const localAccountOrders = getOrders().filter((order) => order.userId === userId);
+      return [...synced, ...localAccountOrders.filter(
+        (local) => !synced.some((remote: Order) => remote.id === local.id)
+      )].sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     },
   });
 };
@@ -165,7 +172,8 @@ export const useCreateOrder = () => {
     },
 
     onSuccess: (order) => {
-      addOrder(order);
+      const currentUserId = useUserStore.getState().user?.id;
+      addOrder({ ...order, userId: currentUserId || 'guest' });
 
       queryClient.invalidateQueries({
         queryKey: ['orders'],
