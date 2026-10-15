@@ -73,6 +73,7 @@ export interface Order {
   totalAmount: number;
   status: OrderStatus;
   deliveryAddress: string;
+  fulfillmentMethod?: 'DELIVERY' | 'PICKUP';
   phone: string;
   notes?: string;
   createdAt: string;
