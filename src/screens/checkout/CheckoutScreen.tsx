@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 // @ts-expect-error - Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +30,7 @@ export default function CheckoutScreen() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
   const [notes, setNotes] = useState('');
   const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
 
@@ -48,11 +50,15 @@ export default function CheckoutScreen() {
       Alert.alert('Erreur', 'Veuillez entrer votre nom');
       return false;
     }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      Alert.alert('Email invalide', 'L’email est facultatif, mais il doit être valide si vous le renseignez. Exemple : client@gmail.com.');
+      return false;
+    }
     if (!phone.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
       return false;
     }
-    if (!address.trim()) {
+    if (fulfillmentMethod === 'DELIVERY' && !address.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre adresse de livraison');
       return false;
     }
@@ -75,10 +81,11 @@ export default function CheckoutScreen() {
 
     try {
       const createdOrder = await createOrder.mutateAsync({
-        deliveryAddress: address,
+        deliveryAddress: fulfillmentMethod === 'PICKUP' ? '' : address.trim(),
+        fulfillmentMethod,
         phone,
         customerName: name,
-        customerEmail: email || undefined,
+        customerEmail: email.trim() || undefined,
         notes: notes || undefined,
       });
 
@@ -86,7 +93,7 @@ export default function CheckoutScreen() {
 
       Alert.alert(
         'Commande confirmée !',
-        'Votre commande a été enregistrée avec succès. Nous vous contacterons bientôt.',
+        fulfillmentMethod === 'PICKUP' ? 'Réservation enregistrée. Attendez que ZIDA confirme la disponibilité avant de venir payer et retirer les produits.' : 'Votre commande a été enregistrée avec succès. Nous vous contacterons bientôt.',
         [
           {
             text: 'Voir ma commande',
@@ -141,9 +148,19 @@ export default function CheckoutScreen() {
         <View style={[styles.section, styles.sectionSecondary]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="person" size={24} color={Colors.secondary} />
-            <Text style={styles.sectionTitle}>Informations de livraison</Text>
+            <Text style={styles.sectionTitle}>Réception de la commande</Text>
           </View>
           <View style={styles.formCard}>
+            <Text style={styles.label}>Choisissez une option :</Text>
+            <View style={styles.fulfillmentOptions}>
+              {([{ id: 'DELIVERY', label: 'Livraison à domicile' }, { id: 'PICKUP', label: 'Retrait chez ZIDA' }] as const).map((method) => (
+                <TouchableOpacity key={method.id} onPress={() => setFulfillmentMethod(method.id)} style={[styles.fulfillmentOption, fulfillmentMethod === method.id && styles.fulfillmentOptionActive]}>
+                  <Ionicons name={method.id === 'PICKUP' ? 'storefront-outline' : 'car-outline'} size={21} color={Colors.primary} />
+                  <Text style={styles.fulfillmentOptionText}>{method.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.fulfillmentHint}>{fulfillmentMethod === 'PICKUP' ? 'ZIDA vous contactera pour confirmer la disponibilité et les modalités de retrait. Ne venez pas avant confirmation.' : 'ZIDA vous contactera pour confirmer les modalités de livraison.'}</Text>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Nom complet *</Text>
               <View style={styles.inputContainer}>
@@ -152,7 +169,7 @@ export default function CheckoutScreen() {
               </View>
             </View>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Email (facultatif)</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="mail-outline" size={20} color={Colors.gray} />
                 <TextInput style={styles.input} placeholder="Ex: jean@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={Colors.textSecondary} />
@@ -165,13 +182,13 @@ export default function CheckoutScreen() {
                 <TextInput style={styles.input} placeholder="Ex: +226 70 00 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor={Colors.textSecondary} />
               </View>
             </View>
-            <View style={styles.inputGroup}>
+            {fulfillmentMethod === 'DELIVERY' && <View style={styles.inputGroup}>
               <Text style={styles.label}>Adresse de livraison *</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
                 <Ionicons name="location-outline" size={20} color={Colors.gray} style={styles.textAreaIcon} />
                 <TextInput style={[styles.input, styles.textArea]} placeholder="Ex: Ouagadougou, Secteur 15, Avenue..." value={address} onChangeText={setAddress} multiline numberOfLines={3} textAlignVertical="top" placeholderTextColor={Colors.textSecondary} />
               </View>
-            </View>
+            </View>}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Notes (optionnel)</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -185,8 +202,8 @@ export default function CheckoutScreen() {
         <View style={styles.paymentInfo}>
           <Ionicons name="cash-outline" size={22} color={Colors.success} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.paymentTitle}>Paiement à la livraison</Text>
-            <Text style={styles.paymentText}>Les moyens Mobile Money seront proposés dès leur activation côté backend.</Text>
+            <Text style={styles.paymentTitle}>{fulfillmentMethod === 'PICKUP' ? 'Paiement au retrait chez ZIDA' : 'Paiement à la livraison'}</Text>
+            <Text style={styles.paymentText}>{fulfillmentMethod === 'PICKUP' ? 'Aucun paiement anticipé. ZIDA confirmera quand votre réservation sera prête.' : 'Paiement à la réception, selon les modalités convenues.'}</Text>
           </View>
         </View>
 
@@ -225,6 +242,11 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 17, fontWeight: '700', color: Colors.text },
   totalPrice: { fontSize: 20, fontWeight: '900', color: Colors.primary },
   formCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 16 },
+  fulfillmentOptions: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  fulfillmentOption: { flex: 1, minHeight: 90, borderWidth: 1, borderColor: Colors.light, borderRadius: 12, alignItems: 'center', justifyContent: 'center', padding: 8 },
+  fulfillmentOptionActive: { borderColor: Colors.primary, backgroundColor: '#FFF3EC' },
+  fulfillmentOptionText: { color: Colors.text, textAlign: 'center', fontWeight: '700', marginTop: 8, fontSize: 12 },
+  fulfillmentHint: { color: Colors.textSecondary, fontSize: 12, lineHeight: 18, marginBottom: 18 },
   inputGroup: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 8 },
   inputContainer: { minHeight: 52, borderWidth: 1, borderColor: Colors.light, borderRadius: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white },

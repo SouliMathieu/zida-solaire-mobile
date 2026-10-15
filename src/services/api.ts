@@ -61,6 +61,7 @@ export const createOrder = async (orderData: {
   customerEmail?: string;
   customerPhone: string;
   deliveryAddress: string;
+  fulfillmentMethod?: 'DELIVERY' | 'PICKUP';
   paymentMethod: string;
   notes?: string;
 }) => {
@@ -70,6 +71,7 @@ export const createOrder = async (orderData: {
   const subtotal = orderData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = 0;
   const response = await api.post('/checkout', {
+    fulfillmentMethod: orderData.fulfillmentMethod || 'DELIVERY',
     customer: {
       firstName,
       lastName,

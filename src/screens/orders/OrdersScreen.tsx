@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/colors';
 import { useOrders } from '../../hooks/useOrders';
+import { useUserStore } from '../../store/userStore';
 import { OrdersStackParamList } from '../../navigation/OrdersStackNavigator';
 import { Order } from '../../types';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
@@ -37,6 +38,7 @@ const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR'
 
 export default function OrdersScreen() {
   const navigation = useNavigation<Nav>();
+  const authenticated = useUserStore((state) => !!state.user && !!state.token);
   const {
     data: orders = [],
     refetch,
@@ -59,12 +61,12 @@ export default function OrdersScreen() {
               <View style={styles.heroIcon}><Ionicons name="receipt-outline" size={26} color={Colors.primary} /></View>
               <Text style={styles.eyebrow}>MES COMMANDES</Text>
               <Text style={styles.title}>Vos commandes ZIDA</Text>
-              <Text style={styles.subtitle}>Retrouvez ici les commandes liées à votre compte client et suivez leur statut.</Text>
+              <Text style={styles.subtitle}>{authenticated ? 'Retrouvez les commandes de votre compte et leur état actuel.' : 'Commandes passées sur ce téléphone. Connectez-vous pour retrouver les commandes associées à votre compte.'}</Text>
             </View>
 
             <View style={styles.notice}>
               <Ionicons name="information-circle-outline" size={21} color={Colors.info} />
-              <Text style={styles.noticeText}>Les commandes affichées ici sont synchronisées avec votre compte ZIDA.</Text>
+              <Text style={styles.noticeText}>{authenticated ? 'Les commandes de votre compte sont synchronisées avec ZIDA.' : 'Sans compte connecté, ces commandes sont conservées uniquement sur ce téléphone. Notez leur référence pour contacter ZIDA : leur statut ne se met pas automatiquement à jour.'}</Text>
             </View>
           </>
         }
@@ -112,7 +114,7 @@ export default function OrdersScreen() {
               </Text>
 
               <Text style={styles.emptyText}>
-                Vos prochaines commandes ZIDA apparaîtront ici automatiquement.
+                {authenticated ? 'Vos prochaines commandes ZIDA apparaîtront ici automatiquement.' : 'Aucune commande enregistrée sur ce téléphone. Vous pouvez commander sans compte, mais connectez-vous pour bénéficier du suivi.'}
               </Text>
             </View>
           )

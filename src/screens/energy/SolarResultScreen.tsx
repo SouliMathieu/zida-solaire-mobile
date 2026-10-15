@@ -1213,12 +1213,15 @@ export default function SolarResultScreen() {
       </Text>
       <View style={styles.formCard}>
         <View style={styles.row}>
-          <TextInput style={[styles.input, styles.half]} placeholder="Prénom *" value={firstName} onChangeText={setFirstName} />
-          <TextInput style={[styles.input, styles.half]} placeholder="Nom *" value={lastName} onChangeText={setLastName} />
+          <View style={styles.half}><Text style={styles.fieldLabel}>Prénom *</Text><TextInput style={styles.input} placeholder="Ex. : Awa" placeholderTextColor={Colors.textSecondary} value={firstName} onChangeText={setFirstName} /></View>
+          <View style={styles.half}><Text style={styles.fieldLabel}>Nom *</Text><TextInput style={styles.input} placeholder="Ex. : Ouédraogo" placeholderTextColor={Colors.textSecondary} value={lastName} onChangeText={setLastName} /></View>
         </View>
-        <TextInput style={styles.input} placeholder="Téléphone *" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-        <TextInput style={styles.input} placeholder="Adresse / quartier" value={address} onChangeText={setAddress} />
+        <Text style={styles.fieldLabel}>Téléphone *</Text>
+        <TextInput style={styles.input} placeholder="Ex. : +226 70 12 34 56" placeholderTextColor={Colors.textSecondary} keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+        <Text style={styles.fieldLabel}>Email (facultatif)</Text>
+        <TextInput style={styles.input} placeholder="Ex. : client@gmail.com" placeholderTextColor={Colors.textSecondary} keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <Text style={styles.fieldLabel}>Adresse ou quartier (facultatif)</Text>
+        <TextInput style={styles.input} placeholder="Ex. : Ouagadougou, secteur 15" placeholderTextColor={Colors.textSecondary} value={address} onChangeText={setAddress} />
         <TouchableOpacity style={[styles.primaryButton, sending && { opacity: 0.6 }]} onPress={submitStudy} disabled={sending} activeOpacity={0.85}>
           <Text style={styles.primaryText}>{sending ? 'Envoi...' : 'Envoyer ma demande'}</Text>
           <Ionicons name="arrow-forward" size={18} color={Colors.white} />
@@ -1490,6 +1493,7 @@ const styles = StyleSheet.create({
   formCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, ...Shadow.card },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   half: { width: '48%' },
+  fieldLabel: { color: Colors.text, fontSize: 13, fontWeight: '700', marginBottom: 6 },
   input: { borderWidth: 1, borderColor: '#DCE2E8', borderRadius: Radius.md, paddingHorizontal: 14, minHeight: 50, marginBottom: 12, color: Colors.text, backgroundColor: '#FBFCFD' },
   primaryButton: { height: 54, backgroundColor: Colors.primary, borderRadius: Radius.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { color: Colors.white, fontWeight: '900', marginRight: 8 },

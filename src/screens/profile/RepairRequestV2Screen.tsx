@@ -110,12 +110,15 @@ export default function RepairRequestV2Screen() {
         </View>
 
         <Text style={styles.sectionTitle}>Décrivez le problème *</Text>
-        <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={5} textAlignVertical="top" placeholder="Ex. : l'onduleur ne s'allume plus depuis ce matin..." />
+        <TextInput style={[styles.input, styles.textArea]} value={description} onChangeText={setDescription} multiline numberOfLines={5} textAlignVertical="top" placeholder="Ex. : l'onduleur ne s'allume plus depuis ce matin..." placeholderTextColor={Colors.textSecondary} />
 
         <Text style={styles.sectionTitle}>Vos coordonnées</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nom complet *" />
-        <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Téléphone *" keyboardType="phone-pad" />
-        <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Adresse / localisation" />
+        <Text style={styles.fieldLabel}>Nom complet *</Text>
+        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ex. : Awa Ouédraogo" placeholderTextColor={Colors.textSecondary} />
+        <Text style={styles.fieldLabel}>Numéro de téléphone *</Text>
+        <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Ex. : +226 70 12 34 56" placeholderTextColor={Colors.textSecondary} keyboardType="phone-pad" />
+        <Text style={styles.fieldLabel}>Adresse ou localisation (facultatif)</Text>
+        <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ex. : Ouagadougou, secteur 15" placeholderTextColor={Colors.textSecondary} />
 
         <View style={styles.notice}>
           <Ionicons name="shield-checkmark-outline" size={20} color={Colors.success} />
@@ -158,6 +161,7 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: Colors.white, ...Shadow.card },
   segmentText: { color: Colors.textSecondary, fontWeight: '700' },
   segmentTextActive: { color: Colors.primary },
+  fieldLabel: { color: Colors.text, fontWeight: '700', marginBottom: 7, fontSize: 13 },
   input: { minHeight: 52, borderRadius: Radius.md, borderWidth: 1, borderColor: '#DCE2E8', backgroundColor: Colors.white, paddingHorizontal: 14, marginBottom: Spacing.md, color: Colors.text },
   textArea: { minHeight: 120, paddingTop: 14 },
   notice: { flexDirection: 'row', backgroundColor: '#ECF8F1', borderRadius: Radius.md, padding: Spacing.md, marginTop: Spacing.sm },

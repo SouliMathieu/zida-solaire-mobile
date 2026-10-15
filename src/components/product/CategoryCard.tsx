@@ -133,6 +133,7 @@ export default function CategoryCard({
       </Text>
 
       <View style={styles.arrow}>
+        <Text style={styles.arrowLabel}>Voir</Text>
         <Ionicons
           name="arrow-forward"
           size={17}
@@ -145,7 +146,7 @@ export default function CategoryCard({
 
 const styles = StyleSheet.create({
   card: {
-    height: 104,
+    minHeight: 112,
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     paddingHorizontal: 6,
@@ -173,18 +174,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontWeight: '800',
-    paddingRight: 24,
+    paddingRight: 6,
+    paddingBottom: 26,
   },
 
   arrow: {
     position: 'absolute',
     right: 6,
     bottom: 6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    height: 26,
+    borderRadius: 13,
+    flexDirection: 'row',
     backgroundColor: '#F0F6FA',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  arrowLabel: { fontSize: 11, fontWeight: '800', color: Colors.secondary, marginRight: 5 },
 });
