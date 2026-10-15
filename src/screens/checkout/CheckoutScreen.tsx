@@ -48,6 +48,10 @@ export default function CheckoutScreen() {
       Alert.alert('Erreur', 'Veuillez entrer votre nom');
       return false;
     }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      Alert.alert('Email invalide', 'L’email est facultatif, mais il doit être valide si vous le renseignez. Exemple : client@gmail.com.');
+      return false;
+    }
     if (!phone.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
       return false;
@@ -78,7 +82,7 @@ export default function CheckoutScreen() {
         deliveryAddress: address,
         phone,
         customerName: name,
-        customerEmail: email || undefined,
+        customerEmail: email.trim() || undefined,
         notes: notes || undefined,
       });
 
@@ -152,7 +156,7 @@ export default function CheckoutScreen() {
               </View>
             </View>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Email (facultatif)</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="mail-outline" size={20} color={Colors.gray} />
                 <TextInput style={styles.input} placeholder="Ex: jean@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={Colors.textSecondary} />
@@ -185,7 +189,7 @@ export default function CheckoutScreen() {
         <View style={styles.paymentInfo}>
           <Ionicons name="cash-outline" size={22} color={Colors.success} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.paymentTitle}>Paiement à la livraison</Text>
+            <Text style={styles.paymentTitle}>Mode de paiement actuel : à la livraison</Text>
             <Text style={styles.paymentText}>Les moyens Mobile Money seront proposés dès leur activation côté backend.</Text>
           </View>
         </View>
