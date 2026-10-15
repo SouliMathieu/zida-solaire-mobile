@@ -188,7 +188,7 @@ export default function CheckoutScreen() {
                 <Ionicons name="location-outline" size={20} color={Colors.gray} style={styles.textAreaIcon} />
                 <TextInput style={[styles.input, styles.textArea]} placeholder="Ex: Ouagadougou, Secteur 15, Avenue..." value={address} onChangeText={setAddress} multiline numberOfLines={3} textAlignVertical="top" placeholderTextColor={Colors.textSecondary} />
               </View>
-            </Vie}
+            </View>}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Notes (optionnel)</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
