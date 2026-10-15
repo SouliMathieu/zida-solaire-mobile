@@ -94,7 +94,7 @@ export default function CategoryProductsScreen() {
           </View>
         ) : null}
         renderItem={({ item }) => (
-          <ProductCard product={item} onPress={() => navigation.navigate('ProductDetail', { product: item })} />
+          <ProductCard product={item} highlightQuery={searchQuery} onPress={() => navigation.navigate('ProductDetail', { product: item })} />
         )}
       />
     </View>
