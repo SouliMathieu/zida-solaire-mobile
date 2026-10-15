@@ -19,7 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
   EN_ATTENTE: 'En attente',
   CONFIRMEE: 'Confirmée',
   EN_PREPARATION: 'En préparation',
-  PRETE: 'Prête',
+  PRETE: 'Prête à récupérer',
   EN_LIVRAISON: 'En livraison',
   EXPEDIEE: 'Expédiée',
   LIVREE: 'Livrée',
@@ -127,7 +127,7 @@ export default function OrdersScreen() {
                 <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: `${statusColor(item.status)}18` }]}>
-                <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{STATUS_LABELS[item.status] || item.status}</Text>
+                <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{item.status === 'LIVREE' && item.fulfillmentMethod === 'PICKUP' ? 'Retirée' : STATUS_LABELS[item.status] || item.status}</Text>
               </View>
             </View>
 
