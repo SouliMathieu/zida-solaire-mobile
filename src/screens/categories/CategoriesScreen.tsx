@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,17 @@ export default function CategoriesScreen() {
   const navigation = useNavigation<Nav>();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const listRef = useRef<FlatList<Product>>(null);
+  const searchOffset = useRef(0);
+  const isSearching = searchQuery.trim().length > 0;
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  const revealResults = () => {
+    listRef.current?.scrollToOffset({ offset: Math.max(0, searchOffset.current - 10), animated: true });
+  };
   const [refreshing, setRefreshing] = useState(false);
 
   const {
@@ -47,7 +58,7 @@ export default function CategoriesScreen() {
     isLoading: productsLoading,
     refetch: refetchProducts,
   } = useProducts({
-    search: searchQuery.trim(),
+    search: debouncedSearch,
   });
 
   const handleRefresh = async () => {
@@ -66,7 +77,8 @@ export default function CategoriesScreen() {
   return (
     <View style={styles.container}>
       <FlatList<Product>
-        data={products}
+        ref={listRef}
+        data={debouncedSearch !== searchQuery.trim() ? [] : products}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.productRow}
@@ -126,7 +138,7 @@ export default function CategoriesScreen() {
                 RECHERCHE
                ===================================================== */}
 
-            <View style={styles.searchBox}>
+            <View style={styles.searchBox} onLayout={(event) => { searchOffset.current = event.nativeEvent.layout.y; }}>
               <Ionicons
                 name="search"
                 size={23}
@@ -138,7 +150,8 @@ export default function CategoriesScreen() {
                 placeholder="Rechercher un produit..."
                 placeholderTextColor={Colors.textSecondary}
                 value={searchQuery}
-                onChangeText={setSearchQuery}
+                onChangeText={(value) => { setSearchQuery(value); if (value.trim()) revealResults(); }}
+                onFocus={revealResults}
                 returnKeyType="search"
               />
 
@@ -158,6 +171,7 @@ export default function CategoriesScreen() {
               )}
             </View>
 
+            {!isSearching && <>
             {/* =====================================================
                 CATÉGORIES
                ===================================================== */}
@@ -218,6 +232,7 @@ export default function CategoriesScreen() {
               />
             )}
 
+            </>}
             {/* =====================================================
                 PRODUITS
                ===================================================== */}
@@ -225,12 +240,12 @@ export default function CategoriesScreen() {
             <View style={styles.productsHeader}>
               <View style={styles.sectionHeadingCopy}>
                 <Text style={styles.sectionTitle}>
-                  Nos produits
+                  {isSearching ? 'Résultats de recherche' : 'Nos produits'}
                 </Text>
 
                 <Text style={styles.sectionSubtitle}>
-                  {productsLoading
-                    ? 'Chargement des produits...'
+                  {productsLoading || (isSearching && debouncedSearch !== searchQuery.trim())
+                    ? 'Recherche en cours...'
                     : `${products.length} produit${products.length > 1 ? 's' : ''} disponible${products.length > 1 ? 's' : ''}`}
                 </Text>
               </View>
@@ -239,7 +254,7 @@ export default function CategoriesScreen() {
         }
 
         ListEmptyComponent={
-          productsLoading ? (
+          productsLoading || (isSearching && debouncedSearch !== searchQuery.trim()) ? (
             <View style={styles.skeletonGrid}>
               {[1, 2, 3, 4].map((item) => (
                 <ProductCardSkeleton key={`product-skeleton-${item}`} />
@@ -263,6 +278,7 @@ export default function CategoriesScreen() {
         renderItem={({ item }) => (
           <ProductCard
             product={item}
+            highlightQuery={isSearching ? searchQuery : ''}
             onPress={() =>
               navigation.navigate('ProductDetail', {
                 product: item,
