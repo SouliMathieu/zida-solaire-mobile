@@ -61,7 +61,7 @@ export default function OrderDetailScreen() {
 
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={22} color={Colors.info} />
-        <Text style={styles.noticeText}>{authenticated && order.userId !== 'guest' ? 'Commande associée à votre compte ZIDA. Consultez « Mes commandes » pour actualiser son statut.' : 'Commande enregistrée sur cet appareil. Conservez sa référence ; pour demander son état, contactez ZIDA SOLAIRE. Le statut affiché ici n’est pas mis à jour automatiquement.'}</Text>
+        <Text style={styles.noticeText}>{authenticated && order.userId !== 'guest' ? 'Commande associée à votre compte ZIDA. Consultez « Mes commandes » pour actualiser son statut.' : 'Commande enregistrée sur cet appareil. Conservez sa référence ; pour demander son état, contactez ZIDA SOLAIRE. Le statut affiché ici n’est pas mis à jour automatiquement.'}{order.fulfillmentMethod === 'PICKUP' ? ' Pour un retrait, attendez que ZIDA vous prévienne avant de vous déplacer.' : ''}</Text>
       </View>
 
       <Section title="Articles">
@@ -79,9 +79,11 @@ export default function OrderDetailScreen() {
         </View>
       </Section>
 
-      <Section title="Livraison">
+      <Section title={order.fulfillmentMethod === 'PICKUP' ? 'Retrait sur place' : 'Livraison'}>
         <View style={styles.card}>
-          <InfoRow icon="location-outline" label="Adresse" value={order.deliveryAddress} />
+          {order.fulfillmentMethod === 'PICKUP'
+            ? <InfoRow icon="storefront-outline" label="Point de retrait" value="ZIDA SOLAIRE — modalités et adresse à confirmer par téléphone" />
+            : <InfoRow icon="location-outline" label="Adresse" value={order.deliveryAddress} />}
           <InfoRow icon="call-outline" label="Téléphone" value={order.phone} />
           {!!order.notes && <InfoRow icon="document-text-outline" label="Notes" value={order.notes} last />}
         </View>
@@ -91,8 +93,8 @@ export default function OrderDetailScreen() {
         <View style={styles.paymentCard}>
           <View style={styles.paymentIcon}><Ionicons name="cash-outline" size={23} color={Colors.primary} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.paymentTitle}>Paiement à la livraison</Text>
-            <Text style={styles.paymentText}>Le règlement est effectué au moment de la réception selon les conditions convenues avec ZIDA.</Text>
+            <Text style={styles.paymentTitle}>{order.fulfillmentMethod === 'PICKUP' ? 'Paiement au retrait' : 'Paiement à la livraison'}</Text>
+            <Text style={styles.paymentText}>{order.fulfillmentMethod === 'PICKUP' ? 'Aucun paiement anticipé. Vous réglerez après confirmation de disponibilité, au moment de récupérer vos articles.' : 'Le règlement est effectué au moment de la réception selon les conditions convenues avec ZIDA.'}</Text>
           </View>
         </View>
       </Section>
