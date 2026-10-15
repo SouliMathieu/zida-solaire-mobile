@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -79,6 +79,17 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
+  const searchOffset = useRef(0);
+  const isSearching = searchQuery.trim().length > 0;
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  const revealResults = () => {
+    scrollRef.current?.scrollTo({ y: Math.max(0, searchOffset.current - 10), animated: true });
+  };
   const [refreshing, setRefreshing] = useState(false);
 
   const {
@@ -87,7 +98,7 @@ export default function HomeScreen() {
     refetch: refetchProducts,
     error: productsError,
   } = useProducts({
-    search: searchQuery.trim(),
+    search: debouncedSearch,
   });
 
   const {
@@ -173,6 +184,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.container}
       contentContainerStyle={[
         styles.contentContainer,
@@ -276,7 +288,7 @@ export default function HomeScreen() {
           RECHERCHE
          ========================================================= */}
 
-      <View style={styles.searchWrap}>
+      <View style={styles.searchWrap} onLayout={(event) => { searchOffset.current = event.nativeEvent.layout.y; }}>
         <Ionicons
           name="search"
           size={21}
@@ -287,13 +299,36 @@ export default function HomeScreen() {
           style={styles.searchInput}
           placeholder="Rechercher un produit ou une solution..."
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={(value) => { setSearchQuery(value); if (value.trim()) revealResults(); }}
+          onFocus={revealResults}
           placeholderTextColor={Colors.textSecondary}
           returnKeyType="search"
           clearButtonMode="while-editing"
         />
       </View>
 
+      {isSearching && (
+        <View style={styles.instantResults}>
+          <Text style={styles.instantHeading}>Résultats pour « {searchQuery.trim()} »</Text>
+          {productsError ? (
+            <ErrorMessage message="Impossible de charger les produits" onRetry={refetchProducts} />
+          ) : productsLoading || debouncedSearch !== searchQuery.trim() ? (
+            <View style={styles.productsGrid}>
+              {[1, 2].map((i) => <ProductCardSkeleton key={i} />)}
+            </View>
+          ) : displayedProducts.length === 0 ? (
+            <EmptyState icon="search-outline" title="Aucun résultat" message="Essayez un autre mot-clé." />
+          ) : (
+            <View style={styles.productsGrid}>
+              {displayedProducts.map((product: Product) => (
+                <ProductCard key={product.id} product={product} highlightQuery={searchQuery} onPress={() => handleProductPress(product)} />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+      {!isSearching && (
+        <>
       {/* =========================================================
           ACTIONS RAPIDES
          ========================================================= */}
@@ -441,6 +476,9 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
+
+        </>
+      )}
 
       {/* =========================================================
           SOLUTIONS / CATÉGORIES
@@ -749,6 +787,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
     paddingVertical: 14,
   },
+
+  instantResults: { paddingHorizontal: Spacing.lg, paddingTop: 20 },
+  instantHeading: { color: Colors.text, fontSize: 20, fontWeight: '900', marginBottom: 12 },
 
   /* ACTIONS */
 
