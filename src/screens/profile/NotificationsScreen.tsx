@@ -27,7 +27,21 @@ export default function NotificationsScreen() {
   const unreadCount = feed.data?.unreadCount || 0;
   const refreshing = feed.isRefetching || prefs.isRefetching;
 
-  const toggle = (key: keyof NotificationPreferences, value: boolean) => updatePrefs.mutate({ [key]: value });
+  const toggle = async (key: keyof NotificationPreferences, value: boolean) => {
+    try {
+      await updatePrefs.mutateAsync({ [key]: value });
+      await prefs.refetch();
+    } catch (error: any) {
+      console.warn('Notification preference update failed:', error);
+      const expired = error?.response?.status === 401;
+      Alert.alert(
+        'Préférence non enregistrée',
+        expired
+          ? 'Votre session a expiré. Reconnectez-vous pour modifier vos préférences.'
+          : 'La modification n’a pas été enregistrée. Vérifiez votre connexion internet, puis réessayez.'
+      );
+    }
+  };
 
   const handleNotificationPress = (item: CustomerNotification) => {
     if (!item.readAt) {
@@ -91,17 +105,21 @@ export default function NotificationsScreen() {
       if (value) {
         const result = await enablePushNotifications();
         if (!result.enabled) {
-          Alert.alert('Notifications désactivées', 'Autorisez les notifications dans les paramètres de votre téléphone pour recevoir les mises à jour ZIDA.');
+          Alert.alert('Autorisation nécessaire', 'Activez les notifications de ZIDA SOLAIRE dans les paramètres Android : Applications > ZIDA SOLAIRE > Notifications. Revenez ensuite dans l’application et réessayez.');
           return;
         }
         await prefs.refetch();
       } else {
         await disablePushNotifications();
-        updatePrefs.mutate({ pushEnabled: false });
+        await updatePrefs.mutateAsync({ pushEnabled: false });
+        await prefs.refetch();
       }
     } catch (error) {
       console.warn('Push preference update failed:', error);
-      Alert.alert('Notifications', "Impossible de modifier les notifications push pour le moment.");
+      Alert.alert(
+        'Notifications non activées',
+        'Le téléphone ou le service de notifications n’a pas pu terminer l’enregistrement. Vérifiez votre connexion et les autorisations Android, puis réessayez. Si le problème persiste, contactez ZIDA.'
+      );
     } finally {
       setPushBusy(false);
     }
@@ -184,16 +202,31 @@ export default function NotificationsScreen() {
       )}
 
       <Text style={styles.preferencesTitle}>Mes préférences</Text>
+      {prefs.isError && (
+        <TouchableOpacity style={styles.noticeError} onPress={() => prefs.refetch()}>
+          <Text style={styles.noticeErrorText}>Impossible de récupérer vos préférences. Appuyez ici pour réessayer.</Text>
+        </TouchableOpacity>
+      )}
       <View style={styles.card}>
-        <PreferenceRow icon="notifications-outline" title="Notifications push" subtitle="Recevoir les mises à jour même lorsque l’application est fermée" value={prefs.data?.pushEnabled ?? false} onValueChange={togglePush} disabled={pushBusy} />
-        <PreferenceRow icon="receipt-outline" title="Commandes" subtitle="Confirmation, préparation, expédition et livraison" value={prefs.data?.orderUpdates ?? true} onValueChange={(v) => toggle('orderUpdates', v)} />
-        <PreferenceRow icon="construct-outline" title="Installations" subtitle="Devis, planification et fin de chantier" value={prefs.data?.installationUpdates ?? true} onValueChange={(v) => toggle('installationUpdates', v)} />
-        <PreferenceRow icon="chatbubbles-outline" title="Assistance" subtitle="Prise en charge et clôture de vos tickets" value={prefs.data?.savUpdates ?? true} onValueChange={(v) => toggle('savUpdates', v)} />
-        <PreferenceRow icon="bulb-outline" title="Conseils solaires" subtitle="Astuces utiles pour votre installation" value={prefs.data?.solarTips ?? true} onValueChange={(v) => toggle('solarTips', v)} />
-        <PreferenceRow icon="pricetag-outline" title="Offres commerciales" subtitle="Promotions et offres ZIDA" value={prefs.data?.promotions ?? false} onValueChange={(v) => toggle('promotions', v)} last />
+        <PreferenceRow icon="notifications-outline" title="Notifications push" subtitle="Recevoir les mises à jour même lorsque l’application est fermée" value={prefs.data?.pushEnabled ?? false} onValueChange={togglePush} disabled={pushBusy || prefs.isLoading || prefs.isError || updatePrefs.isPending} />
+        <PreferenceRow icon="receipt-outline" title="Commandes" subtitle="Confirmation, préparation, expédition et livraison" value={prefs.data?.orderUpdates ?? true} onValueChange={(v) => { void toggle('orderUpdates', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} />
+        <PreferenceRow icon="construct-outline" title="Installations" subtitle="Devis, planification et fin de chantier" value={prefs.data?.installationUpdates ?? true} onValueChange={(v) => { void toggle('installationUpdates', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} />
+        <PreferenceRow icon="chatbubbles-outline" title="Assistance" subtitle="Prise en charge et clôture de vos tickets" value={prefs.data?.savUpdates ?? true} onValueChange={(v) => { void toggle('savUpdates', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} />
+        <PreferenceRow icon="bulb-outline" title="Conseils solaires" subtitle="Astuces utiles pour votre installation" value={prefs.data?.solarTips ?? true} onValueChange={(v) => { void toggle('solarTips', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} />
+        <PreferenceRow icon="pricetag-outline" title="Offres commerciales" subtitle="Promotions et offres ZIDA" value={prefs.data?.promotions ?? false} onValueChange={(v) => { void toggle('promotions', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} last />
       </View>
 
-      <TouchableOpacity style={styles.systemButton} onPress={() => Linking.openSettings()}>
+      <TouchableOpacity
+        style={styles.systemButton}
+        onPress={() => Alert.alert(
+          'Réglages du téléphone',
+          'Vous allez ouvrir les paramètres Android de ZIDA SOLAIRE. Dans « Notifications », autorisez les alertes de l’application. Revenez ensuite ici pour activer « Notifications push ».',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { text: 'Ouvrir les réglages', onPress: () => { Linking.openSettings().catch(() => Alert.alert('Erreur', 'Impossible d’ouvrir les paramètres Android.')); } },
+          ]
+        )}
+      >
         <Ionicons name="settings-outline" size={19} color={Colors.secondary} />
         <Text style={styles.systemButtonText}>Ouvrir les paramètres système</Text>
       </TouchableOpacity>
@@ -259,6 +292,8 @@ const styles = StyleSheet.create({
   preferencesTitle: { color: Colors.text, fontWeight: '900', fontSize: Typography.h2, marginTop: 28, marginBottom: 11 },
   preferenceTitle: { color: Colors.text, fontWeight: '800', fontSize: 13 },
   preferenceSubtitle: { color: Colors.textSecondary, fontSize: 11, marginTop: 3, paddingRight: 8 },
+  noticeError: { backgroundColor: '#FFF2ED', borderRadius: Radius.md, padding: 12, marginBottom: 12 },
+  noticeErrorText: { color: Colors.error, fontSize: 12, lineHeight: 19 },
   systemButton: { height: 50, borderRadius: Radius.md, borderWidth: 1, borderColor: '#D6E1EB', backgroundColor: Colors.white, marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   retryButton: {
     marginTop: 16,
