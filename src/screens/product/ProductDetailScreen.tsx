@@ -12,6 +12,7 @@ import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { useCartStore } from '../../store/cartStore';
 import { useProduct } from '../../hooks/useProducts';
 import { Product } from '../../types';
+import { displaySpecifications } from '../../utils/displaySpecifications';
 
 const { width } = Dimensions.get('window');
 const formatPrice = (price: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(price);
@@ -24,6 +25,7 @@ export default function ProductDetailScreen() {
   const initialProduct = (route.params as ProductDetailParams).product;
   const { data: fullProduct, isLoading } = useProduct(initialProduct.id);
   const product = fullProduct || initialProduct;
+  const readableSpecifications = displaySpecifications(product.specifications);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -137,13 +139,13 @@ export default function ProductDetailScreen() {
             </Section>
           )}
 
-          {!!product.specifications && Object.keys(product.specifications).length > 0 && (
+          {readableSpecifications.length > 0 && (
             <Section title="Caractéristiques techniques">
               <View style={styles.specCard}>
-                {Object.entries(product.specifications).map(([key, value], index, array) => (
-                  <View style={[styles.specRow, index === array.length - 1 && { borderBottomWidth: 0 }]} key={key}>
-                    <Text style={styles.specLabel}>{key}</Text>
-                    <Text style={styles.specValue}>{String(value)}</Text>
+                {readableSpecifications.map((spec, index) => (
+                  <View style={[styles.specRow, index === readableSpecifications.length - 1 && { borderBottomWidth: 0 }]} key={spec.key}>
+                    <Text style={styles.specLabel}>{spec.label}</Text>
+                    <Text style={styles.specValue}>{spec.value}</Text>
                   </View>
                 ))}
               </View>
