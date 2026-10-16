@@ -72,10 +72,10 @@ export default function EditProfileScreen() {
             <View style={styles.verifiedIcon}><Ionicons name="shield-checkmark" size={20} color={Colors.success} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.phoneValue}>{user?.phone || '—'}</Text>
-              <Text style={styles.phoneHelp}>Ce numéro est votre identifiant sécurisé. Son changement nécessite une nouvelle vérification OTP.</Text>
-              <TouchableOpacity style={styles.changePhoneButton} onPress={() => navigation.navigate('ChangePhone')}>
+              <Text style={styles.phoneHelp}>Ce numéro sert à votre connexion. Pour le modifier, contactez directement ZIDA SOLAIRE. La modification automatique est indisponible.</Text>
+              <TouchableOpacity style={styles.changePhoneButton} disabled={true}>
                 <Ionicons name="swap-horizontal-outline" size={17} color={Colors.secondary} />
-                <Text style={styles.changePhoneText}>Changer ce numéro</Text>
+                <Text style={styles.changePhoneText}>Changement via ZIDA SOLAIRE</Text>
               </TouchableOpacity>
             </View>
           </View>

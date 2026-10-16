@@ -127,6 +127,7 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Register')}><Text style={styles.secondaryButtonText}>Créer un compte</Text></TouchableOpacity>
 
         <View style={styles.guestActions}>
+          <QuickRow icon="receipt-outline" title="Mes commandes sur ce téléphone" subtitle="Retrouver mes commandes invitées" onPress={() => navigation.navigate('OrdersArea')} />
           <QuickRow icon="cart-outline" title="Mon panier" subtitle={`${cartCount} article${cartCount > 1 ? 's' : ''}`} onPress={() => navigation.navigate('CartArea')} />
           <QuickRow icon="document-text-outline" title="Demander un devis" subtitle="Recevez une proposition personnalisée" onPress={() => navigation.navigate('Devis')} />
           <QuickRow icon="chatbubbles-outline" title="Assistance" subtitle="Signaler un problème technique" onPress={() => navigation.navigate('RepairRequest')} />
