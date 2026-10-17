@@ -216,22 +216,6 @@ export default function NotificationsScreen() {
         <PreferenceRow icon="pricetag-outline" title="Offres commerciales" subtitle="Promotions et offres ZIDA" value={prefs.data?.promotions ?? false} onValueChange={(v) => { void toggle('promotions', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} last />
       </View>
 
-      {/* Les réglages système ne sont pas un parcours de préférence :
-          Android ne les exige que si l'autorisation système a été refusée. */}
-      {/* <TouchableOpacity
-        style={styles.systemButton}
-        onPress={() => Alert.alert(
-          'Réglages du téléphone',
-          'Vous allez ouvrir les paramètres Android de ZIDA SOLAIRE. Dans « Notifications », autorisez les alertes de l’application. Revenez ensuite ici pour activer « Notifications push ».',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Ouvrir les réglages', onPress: () => { Linking.openSettings().catch(() => Alert.alert('Erreur', 'Impossible d’ouvrir les paramètres Android.')); } },
-          ]
-        )}
-      >
-        <Ionicons name="settings-outline" size={19} color={Colors.secondary} />
-        <Text style={styles.systemButtonText}>Ouvrir les paramètres système</Text>
-      </TouchableOpacity> */}
     </ScrollView>
   );
 }
