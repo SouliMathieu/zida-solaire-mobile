@@ -41,6 +41,11 @@ export default function EditProfileScreen() {
       return;
     }
 
+    if (formData.email.trim().toLowerCase() !== String(user?.email || '').trim().toLowerCase()) {
+      Alert.alert('Vérification nécessaire', 'Pour changer l’adresse e-mail du compte, contactez ZIDA SOLAIRE. La nouvelle adresse doit être vérifiée.');
+      return;
+    }
+
     try {
       await updateProfileMutation.mutateAsync({
         firstName: formData.firstName.trim(),
