@@ -960,17 +960,30 @@ export default function SolarResultScreen() {
     if (!quoteHtml || savingQuote) return;
     setSavingQuote(true);
     try {
-      const { uri } = await Print.printToFileAsync({ html: quoteHtml });
       if (Platform.OS !== 'android') {
         Alert.alert('Enregistrement', 'L’enregistrement dans un dossier est disponible sur Android.');
         return;
       }
       const permission = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!permission.granted) return;
-      const fileName = 'Estimation-ZIDA-' + new Date().toISOString().slice(0, 10) + '.pdf';
+      const { uri } = await Print.printToFileAsync({ html: quoteHtml });
+      const pdfInfo = await FileSystem.getInfoAsync(uri);
+      if (!pdfInfo.exists || !pdfInfo.size || pdfInfo.size < 100) {
+        throw new Error('Le PDF généré est vide ou illisible.');
+      }
       const data = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      if (!data.startsWith('JVBERi0')) {
+        throw new Error('Le document généré n’est pas un PDF valide.');
+      }
+      // Le sélecteur Android ajoute l'extension selon le type MIME.
+      const fileName = 'Estimation-ZIDA-' + new Date().toISOString().replace(/[:.]/g, '-');
       const destination = await FileSystem.StorageAccessFramework.createFileAsync(permission.directoryUri, fileName, 'application/pdf');
-      await FileSystem.writeAsStringAsync(destination, data, { encoding: FileSystem.EncodingType.Base64 });
+      try {
+        await FileSystem.writeAsStringAsync(destination, data, { encoding: FileSystem.EncodingType.Base64 });
+      } catch (writeError) {
+        await FileSystem.StorageAccessFramework.deleteAsync(destination, { idempotent: true }).catch(() => undefined);
+        throw writeError;
+      }
       Alert.alert('PDF enregistré', 'Votre estimation a été enregistrée dans le dossier choisi.');
     } catch (error) {
       console.error('Erreur enregistrement PDF', error);
