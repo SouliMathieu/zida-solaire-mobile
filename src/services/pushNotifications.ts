@@ -6,6 +6,19 @@ import { registerCustomerPushToken, revokeCustomerPushToken } from './api';
 
 const PUSH_TOKEN_STORAGE_KEY = 'zida-expo-push-token';
 
+// Identifiant affiché lors du diagnostic, sans divulguer les jetons d'appareil.
+export const PUSH_DIAGNOSTIC_VERSION = 'PUSH-DIAG-02';
+
+export class PushActivationError extends Error {
+  constructor(
+    public readonly stage: 'fcm' | 'expo' | 'server',
+    public readonly httpStatus?: number
+  ) {
+    super(`Échec ${stage}${httpStatus ? ` (HTTP ${httpStatus})` : ''}`);
+    this.name = 'PushActivationError';
+  }
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -43,17 +56,49 @@ export async function enablePushNotifications() {
     return { enabled: false, reason: 'permission-denied' as const };
   }
 
-  const expoToken = await Notifications.getExpoPushTokenAsync({
-    projectId: EXPO_PROJECT_ID,
-  });
+  // Séparer le diagnostic FCM natif de l'obtention du jeton Expo :
+  // autrement les deux erreurs apparaissent comme un échec indistinct.
+  try {
+    const nativeToken = await Notifications.getDevicePushTokenAsync();
+    if (!nativeToken.data || typeof nativeToken.data !== 'string') {
+      throw new Error('Jeton FCM natif absent');
+    }
+  } catch (error) {
+    console.warn('Push registration failed at native FCM step:', error);
+    throw new PushActivationError('fcm');
+  }
 
-  const token = expoToken.data;
-  await registerCustomerPushToken({
-    token,
-    platform: Platform.OS,
-  });
+  let token: string;
+  try {
+    const expoToken = await Notifications.getExpoPushTokenAsync({
+      projectId: EXPO_PROJECT_ID,
+    });
+    token = expoToken.data;
+    if (!token || !/^Expo(?:nent)?PushToken\\[[^\\]]+\\]$/.test(token)) {
+      throw new Error('Jeton Expo absent ou malformé');
+    }
+  } catch (error) {
+    console.warn('Push registration failed at Expo token step:', error);
+    throw new PushActivationError('expo');
+  }
+
+  try {
+    await registerCustomerPushToken({
+      token,
+      platform: Platform.OS,
+    });
+  } catch (error: any) {
+    const status = Number(error?.response?.status);
+    console.warn('Push registration rejected by ZIDA API:', {
+      status: Number.isFinite(status) ? status : 'network-error',
+    });
+    throw new PushActivationError(
+      'server',
+      Number.isFinite(status) && status > 0 ? status : undefined
+    );
+  }
+
   await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
-
   return { enabled: true, token };
 }
 
