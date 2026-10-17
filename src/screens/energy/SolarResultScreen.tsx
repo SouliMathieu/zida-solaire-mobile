@@ -981,6 +981,10 @@ export default function SolarResultScreen() {
   };
 
   const submitStudy = async () => {
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      Alert.alert('Adresse e-mail invalide', 'Corrigez votre adresse ou laissez le champ vide.');
+      return;
+    }
     if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
       Alert.alert('Informations requises', 'Veuillez renseigner votre prénom, nom et téléphone.');
       return;
