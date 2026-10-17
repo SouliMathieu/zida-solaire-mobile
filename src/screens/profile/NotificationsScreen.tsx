@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -216,7 +216,9 @@ export default function NotificationsScreen() {
         <PreferenceRow icon="pricetag-outline" title="Offres commerciales" subtitle="Promotions et offres ZIDA" value={prefs.data?.promotions ?? false} onValueChange={(v) => { void toggle('promotions', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} last />
       </View>
 
-      <TouchableOpacity
+      {/* Les réglages système ne sont pas un parcours de préférence :
+          Android ne les exige que si l'autorisation système a été refusée. */}
+      {/* <TouchableOpacity
         style={styles.systemButton}
         onPress={() => Alert.alert(
           'Réglages du téléphone',
@@ -229,7 +231,7 @@ export default function NotificationsScreen() {
       >
         <Ionicons name="settings-outline" size={19} color={Colors.secondary} />
         <Text style={styles.systemButtonText}>Ouvrir les paramètres système</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </ScrollView>
   );
 }
