@@ -1,11 +1,9 @@
 name: Build Preview APK
 
+# La compilation APK est déclenchée uniquement à la demande.
+# Une fusion de PR ne doit jamais lancer automatiquement un APK.
 on:
   workflow_dispatch:
-  push:
-    branches: [refonte-ux-v2]
-    paths:
-      - .github/workflows/build-preview-apk.yml
 
 permissions:
   contents: read
@@ -44,6 +42,29 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Configure Firebase for Android push notifications
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        shell: bash
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::error::Le secret GitHub GOOGLE_SERVICES_JSON_BASE64 est manquant. Ajoutez le google-services.json Firebase de com.zidasolaire.mobile encodé en Base64 avant de construire un APK avec notifications push."
+            exit 1
+          fi
+          printf "%s" "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > google-services.json
+          node <<'NODE'
+          const fs = require('node:fs');
+          const google = JSON.parse(fs.readFileSync('google-services.json', 'utf8'));
+          const packageName = 'com.zidasolaire.mobile';
+          const found = (google.client || []).some(client => client.client_info?.android_client_info?.package_name === packageName);
+          if (!google.project_info?.project_number || !found) {
+            throw new Error('google-services.json invalide ou ne correspondant pas à ' + packageName);
+          }
+          const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          app.expo.android.googleServicesFile = './google-services.json';
+          fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
+          console.log('Configuration Firebase Android validée pour ' + packageName);
+          NODE
       - name: Generate Android native project
         run: npx expo prebuild --platform android --clean
 

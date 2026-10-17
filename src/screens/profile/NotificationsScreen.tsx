@@ -105,7 +105,7 @@ export default function NotificationsScreen() {
       if (value) {
         const result = await enablePushNotifications();
         if (!result.enabled) {
-          Alert.alert('Autorisation nécessaire', 'Activez les notifications de ZIDA SOLAIRE dans les paramètres Android : Applications > ZIDA SOLAIRE > Notifications. Revenez ensuite dans l’application et réessayez.');
+          Alert.alert('Autorisation nécessaire', 'Autorisez les notifications de ZIDA SOLAIRE dans les réglages Android, puis revenez dans l’application.');
           return;
         }
         await prefs.refetch();
@@ -114,12 +114,20 @@ export default function NotificationsScreen() {
         await updatePrefs.mutateAsync({ pushEnabled: false });
         await prefs.refetch();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Push preference update failed:', error);
-      Alert.alert(
-        'Notifications non activées',
-        'Le téléphone ou le service de notifications n’a pas pu terminer l’enregistrement. Vérifiez votre connexion et les autorisations Android, puis réessayez. Si le problème persiste, contactez ZIDA.'
-      );
+      const message = String(error?.message || '');
+      const serverError = error?.response?.data?.error || error?.response?.data?.message;
+      const details = message.includes('Firebase') || message.includes('FCM') || message.includes('Default FirebaseApp')
+        ? 'La configuration Firebase des notifications est absente ou incorrecte dans cette version de l’application.'
+        : message.includes('projectId')
+          ? 'Le projet Expo des notifications n’est pas correctement configuré.'
+          : error?.response?.status === 401
+            ? 'Votre session a expiré. Reconnectez-vous et réessayez.'
+            : error?.response?.status
+              ? String(serverError || 'Le serveur n’a pas pu enregistrer votre téléphone.')
+              : 'Impossible d’enregistrer les notifications. Vérifiez la connexion internet et réessayez.';
+      Alert.alert('Notifications non activées', details);
     } finally {
       setPushBusy(false);
     }
