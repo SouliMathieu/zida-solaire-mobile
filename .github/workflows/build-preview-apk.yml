@@ -1,11 +1,9 @@
 name: Build Preview APK
 
+# La compilation APK est déclenchée uniquement à la demande.
+# Une fusion de PR ne doit jamais lancer automatiquement un APK.
 on:
   workflow_dispatch:
-  push:
-    branches: [refonte-ux-v2]
-    paths:
-      - .github/workflows/build-preview-apk.yml
 
 permissions:
   contents: read
