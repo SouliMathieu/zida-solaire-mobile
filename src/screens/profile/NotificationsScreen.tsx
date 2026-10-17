@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -216,20 +216,6 @@ export default function NotificationsScreen() {
         <PreferenceRow icon="pricetag-outline" title="Offres commerciales" subtitle="Promotions et offres ZIDA" value={prefs.data?.promotions ?? false} onValueChange={(v) => { void toggle('promotions', v); }} disabled={prefs.isLoading || prefs.isError || updatePrefs.isPending} last />
       </View>
 
-      <TouchableOpacity
-        style={styles.systemButton}
-        onPress={() => Alert.alert(
-          'Réglages du téléphone',
-          'Vous allez ouvrir les paramètres Android de ZIDA SOLAIRE. Dans « Notifications », autorisez les alertes de l’application. Revenez ensuite ici pour activer « Notifications push ».',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Ouvrir les réglages', onPress: () => { Linking.openSettings().catch(() => Alert.alert('Erreur', 'Impossible d’ouvrir les paramètres Android.')); } },
-          ]
-        )}
-      >
-        <Ionicons name="settings-outline" size={19} color={Colors.secondary} />
-        <Text style={styles.systemButtonText}>Ouvrir les paramètres système</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }

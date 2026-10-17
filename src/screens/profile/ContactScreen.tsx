@@ -71,6 +71,10 @@ export default function ContactScreen() {
       showToast('Veuillez entrer votre nom', 'error');
       return false;
     }
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      showToast('Adresse e-mail invalide. Corrigez-la ou laissez le champ vide.', 'error');
+      return false;
+    }
     if (!formData.phone.trim()) {
       showToast('Veuillez entrer votre numéro de téléphone', 'error');
       return false;
@@ -107,7 +111,7 @@ export default function ContactScreen() {
       });
     } catch (error: any) {
       showToast(
-        error.response?.data?.message || "Une erreur s'est produite",
+        error.response?.data?.error || error.response?.data?.message || "Impossible d'envoyer votre message",
         'error'
       );
     } finally {
