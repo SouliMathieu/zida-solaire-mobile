@@ -27,32 +27,88 @@ async function ensureAndroidChannel() {
   });
 }
 
+type PushActivationStage =
+  | 'ANDROID_CHANNEL'
+  | 'PERMISSION'
+  | 'FCM_TOKEN'
+  | 'EXPO_TOKEN'
+  | 'SERVER_REGISTER'
+  | 'LOCAL_SAVE';
+
+export class PushActivationDiagnosticError extends Error {
+  constructor(
+    public readonly stage: PushActivationStage,
+    public readonly httpStatus?: number
+  ) {
+    super('PUSH-DIAG-2-' + stage + (httpStatus ? '-' + httpStatus : ''));
+    this.name = 'PushActivationDiagnosticError';
+  }
+}
+
+// Ne journaliser aucun jeton push, ni le contenu des requêtes HTTP.
+function activationError(stage: PushActivationStage, error: unknown) {
+  const httpStatus = Number((error as { response?: { status?: number } } | null)?.response?.status) || undefined;
+  console.warn('Push activation diagnostic:', { stage, httpStatus });
+  return new PushActivationDiagnosticError(stage, httpStatus);
+}
+
 export async function enablePushNotifications() {
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     return { enabled: false, reason: 'unsupported' as const };
   }
 
-  await ensureAndroidChannel();
+  try {
+    await ensureAndroidChannel();
+  } catch (error) {
+    throw activationError('ANDROID_CHANNEL', error);
+  }
 
-  let permissions = await Notifications.getPermissionsAsync();
-  if (permissions.status !== 'granted') {
-    permissions = await Notifications.requestPermissionsAsync();
+  let permissions;
+  try {
+    permissions = await Notifications.getPermissionsAsync();
+    if (permissions.status !== 'granted') {
+      permissions = await Notifications.requestPermissionsAsync();
+    }
+  } catch (error) {
+    throw activationError('PERMISSION', error);
   }
 
   if (permissions.status !== 'granted') {
     return { enabled: false, reason: 'permission-denied' as const };
   }
 
-  const expoToken = await Notifications.getExpoPushTokenAsync({
-    projectId: EXPO_PROJECT_ID,
-  });
+  // Permet de séparer un problème de Firebase/Google Play Services d'un problème Expo.
+  if (Platform.OS === 'android') {
+    try {
+      const fcmToken = await Notifications.getDevicePushTokenAsync();
+      if (!fcmToken.data) throw new Error('No native device token');
+    } catch (error) {
+      throw activationError('FCM_TOKEN', error);
+    }
+  }
 
-  const token = expoToken.data;
-  await registerCustomerPushToken({
-    token,
-    platform: Platform.OS,
-  });
-  await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
+  let token: string;
+  try {
+    const expoToken = await Notifications.getExpoPushTokenAsync({
+      projectId: EXPO_PROJECT_ID,
+    });
+    token = expoToken.data;
+    if (!token) throw new Error('No Expo push token');
+  } catch (error) {
+    throw activationError('EXPO_TOKEN', error);
+  }
+
+  try {
+    await registerCustomerPushToken({ token, platform: Platform.OS });
+  } catch (error) {
+    throw activationError('SERVER_REGISTER', error);
+  }
+
+  try {
+    await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
+  } catch (error) {
+    throw activationError('LOCAL_SAVE', error);
+  }
 
   return { enabled: true, token };
 }
