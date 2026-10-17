@@ -66,7 +66,7 @@ export async function enablePushNotifications() {
         projectId: EXPO_PROJECT_ID,
       });
       const candidate = expoToken.data;
-      if (!candidate || !/^Expo(?:nent)?PushToken\\[[^\\]]+\\]$/.test(candidate)) {
+      if (!candidate || !/^Expo(?:nent)?PushToken\[[^\]]+\]$/.test(candidate)) {
         throw new Error('Jeton Expo absent ou malformé');
       }
       token = candidate;
