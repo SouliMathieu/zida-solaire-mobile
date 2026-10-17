@@ -56,29 +56,31 @@ export async function enablePushNotifications() {
     return { enabled: false, reason: 'permission-denied' as const };
   }
 
-  // Séparer le diagnostic FCM natif de l'obtention du jeton Expo :
-  // autrement les deux erreurs apparaissent comme un échec indistinct.
-  try {
-    const nativeToken = await Notifications.getDevicePushTokenAsync();
-    if (!nativeToken.data || typeof nativeToken.data !== 'string') {
-      throw new Error('Jeton FCM natif absent');
+  // Expo obtient lui-même le jeton natif FCM lors de cet appel.
+  // Une requête native préalable double inutilement les tentatives.
+  let token: string | undefined;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const expoToken = await Notifications.getExpoPushTokenAsync({
+        projectId: EXPO_PROJECT_ID,
+      });
+      const candidate = expoToken.data;
+      if (!candidate || !/^Expo(?:nent)?PushToken\[[^\]]+\]$/.test(candidate)) {
+        throw new Error('Jeton Expo absent ou malformé');
+      }
+      token = candidate;
+      break;
+    } catch (error) {
+      lastError = error;
+      console.warn('Expo push token acquisition failed:', { attempt, error });
+      if (attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, attempt * 1500));
+      }
     }
-  } catch (error) {
-    console.warn('Push registration failed at native FCM step:', error);
-    throw new PushActivationError('fcm');
   }
-
-  let token: string;
-  try {
-    const expoToken = await Notifications.getExpoPushTokenAsync({
-      projectId: EXPO_PROJECT_ID,
-    });
-    token = expoToken.data;
-    if (!token || !/^Expo(?:nent)?PushToken\\[[^\\]]+\\]$/.test(token)) {
-      throw new Error('Jeton Expo absent ou malformé');
-    }
-  } catch (error) {
-    console.warn('Push registration failed at Expo token step:', error);
+  if (!token) {
+    console.warn('Expo push token unavailable after retries:', lastError);
     throw new PushActivationError('expo');
   }
 
