@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Platform } from 'react-native';
 import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import { WebView } from 'react-native-webview';
 // @ts-expect-error Expo vector icons types issue
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -436,6 +437,8 @@ export default function SolarResultScreen() {
   const result = useMemo(() => estimateSolarSystem(answers), [answers]);
   const [sending, setSending] = useState(false);
   const [generatingQuote, setGeneratingQuote] = useState(false);
+  const [quoteHtml, setQuoteHtml] = useState<string | null>(null);
+  const [savingQuote, setSavingQuote] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -937,28 +940,7 @@ export default function SolarResultScreen() {
         </html>
       `;
 
-      const { uri } =
-        await Print.printToFileAsync({
-          html,
-        });
-
-      const sharingAvailable =
-        await Sharing.isAvailableAsync();
-
-      if (sharingAvailable) {
-        await Sharing.shareAsync(
-          uri,
-          {
-            mimeType: 'application/pdf',
-            dialogTitle:
-              'Devis simulé ZIDA Solaire',
-          },
-        );
-      } else {
-        await Print.printAsync({
-          html,
-        });
-      }
+      setQuoteHtml(html);
     } catch (error) {
       console.error(
         'Erreur génération devis simulé:',
@@ -971,6 +953,30 @@ export default function SolarResultScreen() {
       );
     } finally {
       setGeneratingQuote(false);
+    }
+  };
+
+  const saveQuotePdf = async () => {
+    if (!quoteHtml || savingQuote) return;
+    setSavingQuote(true);
+    try {
+      const { uri } = await Print.printToFileAsync({ html: quoteHtml });
+      if (Platform.OS !== 'android') {
+        Alert.alert('Enregistrement', 'L’enregistrement dans un dossier est disponible sur Android.');
+        return;
+      }
+      const permission = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permission.granted) return;
+      const fileName = 'Estimation-ZIDA-' + new Date().toISOString().slice(0, 10) + '.pdf';
+      const data = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      const destination = await FileSystem.StorageAccessFramework.createFileAsync(permission.directoryUri, fileName, 'application/pdf');
+      await FileSystem.writeAsStringAsync(destination, data, { encoding: FileSystem.EncodingType.Base64 });
+      Alert.alert('PDF enregistré', 'Votre estimation a été enregistrée dans le dossier choisi.');
+    } catch (error) {
+      console.error('Erreur enregistrement PDF', error);
+      Alert.alert('Enregistrement impossible', 'Veuillez choisir un dossier accessible et réessayer.');
+    } finally {
+      setSavingQuote(false);
     }
   };
 
@@ -1197,9 +1203,30 @@ export default function SolarResultScreen() {
         <Text style={styles.simulatedQuoteButtonText}>
           {generatingQuote
             ? 'Génération du devis...'
-            : 'Télécharger mon estimation'}
+            : 'Visualiser mon estimation'}
         </Text>
       </TouchableOpacity>
+
+      <Modal visible={!!quoteHtml} animationType="slide" onRequestClose={() => setQuoteHtml(null)}>
+        <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 38 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }}>
+            <Text style={{ color: Colors.text, fontSize: 18, fontWeight: 'bold' }}>Aperçu de l’estimation</Text>
+            <TouchableOpacity accessibilityLabel="Fermer l’aperçu" onPress={() => setQuoteHtml(null)}>
+              <Ionicons name="close-circle-outline" size={29} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+          {!!quoteHtml && <WebView originWhitelist={['*']} source={{ html: quoteHtml }} style={{ flex: 1 }} />}
+          <TouchableOpacity
+            onPress={saveQuotePdf}
+            disabled={savingQuote}
+            style={{ backgroundColor: Colors.primary, margin: 16, padding: 17, borderRadius: 12, alignItems: 'center', opacity: savingQuote ? 0.6 : 1 }}
+          >
+            <Text style={{ color: Colors.white, fontWeight: 'bold', fontSize: 16 }}>
+              {savingQuote ? 'Enregistrement...' : 'Enregistrer le PDF sur mon téléphone'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       <Text style={styles.simulatedQuoteHint}>
         Ce document résume votre besoin et les prix déjà connus.
