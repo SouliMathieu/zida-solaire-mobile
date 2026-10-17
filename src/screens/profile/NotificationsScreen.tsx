@@ -8,7 +8,7 @@ import { Colors } from '../../constants/colors';
 import { Radius, Shadow, Spacing, Typography } from '../../theme/tokens';
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotificationPreferences, useNotifications, useUpdateNotificationPreferences } from '../../hooks/useNotifications';
 import { CustomerNotification, NotificationPreferences } from '../../services/api';
-import { disablePushNotifications, enablePushNotifications } from '../../services/pushNotifications';
+import { disablePushNotifications, enablePushNotifications, PushActivationError, PUSH_DIAGNOSTIC_VERSION } from '../../services/pushNotifications';
 import { ProfileStackParamList } from '../../navigation/ProfileStackNavigator';
 
 const ICONS: Record<string, string> = { order: 'receipt-outline', installation: 'construct-outline', sav: 'chatbubbles-outline', system: 'notifications-outline' };
@@ -116,18 +116,15 @@ export default function NotificationsScreen() {
       }
     } catch (error: any) {
       console.warn('Push preference update failed:', error);
-      const message = String(error?.message || '');
-      const serverError = error?.response?.data?.error || error?.response?.data?.message;
-      const details = message.includes('Firebase') || message.includes('FCM') || message.includes('Default FirebaseApp')
-        ? 'La configuration Firebase des notifications est absente ou incorrecte dans cette version de l’application.'
-        : message.includes('projectId')
-          ? 'Le projet Expo des notifications n’est pas correctement configuré.'
-          : error?.response?.status === 401
-            ? 'Votre session a expiré. Reconnectez-vous et réessayez.'
-            : error?.response?.status
-              ? String(serverError || 'Le serveur n’a pas pu enregistrer votre téléphone.')
-              : 'Impossible d’enregistrer les notifications. Vérifiez la connexion internet et réessayez.';
-      Alert.alert('Notifications non activées', details);
+      const stage = error instanceof PushActivationError ? error.stage : null;
+      const details = stage === 'fcm'
+        ? 'Étape FCM : Android ne peut pas obtenir son jeton Firebase. Vérifiez les services Google Play et la configuration du téléphone.'
+        : stage === 'expo'
+          ? 'Étape Expo : le jeton FCM est disponible mais le service Expo ne renvoie pas de jeton push. Vérifiez la connexion internet.'
+          : stage === 'server'
+            ? `Étape serveur ZIDA : l’enregistrement du jeton a échoué${error.httpStatus ? ` (HTTP ${error.httpStatus})` : ' (réseau)'}. Vérifiez la connexion et la session.`
+            : 'Erreur inattendue lors de l’activation. Réessayez et indiquez le code de diagnostic affiché ci-dessous.';
+      Alert.alert('Notifications non activées', `${details}\n\nDiagnostic : ${PUSH_DIAGNOSTIC_VERSION}`);
     } finally {
       setPushBusy(false);
     }
@@ -210,6 +207,7 @@ export default function NotificationsScreen() {
       )}
 
       <Text style={styles.preferencesTitle}>Mes préférences</Text>
+      <Text style={{ color: Colors.textSecondary, fontSize: 10, marginBottom: 8 }}>Diagnostic : {PUSH_DIAGNOSTIC_VERSION}</Text>
       {prefs.isError && (
         <TouchableOpacity style={styles.noticeError} onPress={() => prefs.refetch()}>
           <Text style={styles.noticeErrorText}>Impossible de récupérer vos préférences. Appuyez ici pour réessayer.</Text>
