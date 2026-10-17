@@ -60,6 +60,10 @@ export default function DevisScreen() {
       Alert.alert('Erreur', 'Veuillez entrer votre nom');
       return false;
     }
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      Alert.alert('Adresse e-mail invalide', 'Saisissez une adresse valide ou laissez le champ vide.');
+      return false;
+    }
     if (!formData.phone.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
       return false;
@@ -83,7 +87,7 @@ export default function DevisScreen() {
     try {
       await submitDevis.mutateAsync({
         name: formData.name,
-        email: formData.email || undefined,
+        email: formData.email.trim() || undefined,
         phone: formData.phone,
         address: formData.address,
         systemType: formData.systemType,
@@ -114,7 +118,7 @@ export default function DevisScreen() {
     } catch (error: any) {
       Alert.alert(
         'Erreur',
-        error.response?.data?.message || "Une erreur s'est produite. Veuillez réessayer."
+        error.response?.data?.error || error.response?.data?.message || (error.response?.status === 404 ? 'Le service de devis est momentanément indisponible. Veuillez réessayer après la mise à jour.' : "Impossible d'envoyer votre demande. Vérifiez la connexion et réessayez.")
       );
     } finally {
       setIsSubmitting(false);
