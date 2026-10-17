@@ -2,9 +2,9 @@ name: Validate Mobile Refactor
 
 on:
   push:
-    branches: [refonte-ux-v2]
+    branches: [refonte-ux-v2, fix/devis-notifications-aperçu-pdf]
   pull_request:
-    branches: [main]
+    branches: [main, refonte-ux-v2]
 
 jobs:
   typecheck:
