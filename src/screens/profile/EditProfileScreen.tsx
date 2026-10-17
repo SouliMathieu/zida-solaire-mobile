@@ -36,6 +36,11 @@ export default function EditProfileScreen() {
       return;
     }
 
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      Alert.alert('Adresse e-mail invalide', 'Saisissez une adresse e-mail valide.');
+      return;
+    }
+
     try {
       await updateProfileMutation.mutateAsync({
         firstName: formData.firstName.trim(),
